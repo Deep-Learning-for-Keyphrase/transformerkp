@@ -1,7 +1,7 @@
 import logging
 import pathlib
 from collections import defaultdict
-from typing import Union, Any, Dict, List
+from typing import Union, Dict, List
 
 from datasets import get_dataset_split_names
 from datasets import Dataset
@@ -9,11 +9,9 @@ from datasets import DatasetDict
 from datasets import IterableDataset
 from datasets import IterableDatasetDict
 from datasets import load_dataset
-from transformers import AutoTokenizer
 
-from base import KPDataset
-from args import KEDataArguments
-from preprocessing import tokenize_and_align_labels
+from transformerkp.data.base import KPDataset
+from transformerkp.data.extraction.args import KEDataArguments
 
 logger = logging.getLogger(__name__)
 
@@ -217,7 +215,7 @@ if __name__ == "__main__":
 
     # TODO: to be removed. Temporary code for testing the module
     # testing the general KEDataArguments class
-    from args import KEDataArguments
+    from transformerkp.data.extraction.args import KEDataArguments
     
     data_args = KEDataArguments(
         dataset_name="midas/inspec",
@@ -260,7 +258,7 @@ if __name__ == "__main__":
     assert custom_ke_data.validation is None
 
     # test custom loading of NUS dataset
-    from args import NUSKEDataArguments
+    from transformerkp.data.extraction.args import NUSKEDataArguments
 
     nus_data_args = NUSKEDataArguments()
     nus_ke_data = KEDataset(nus_data_args)
@@ -274,7 +272,7 @@ if __name__ == "__main__":
     assert nus_ke_data.validation is None
 
     # test custom loading of Inspec dataset
-    from args import InspecKEDataArguments
+    from transformerkp.data.extraction.args import InspecKEDataArguments
 
     inspec_data_args = InspecKEDataArguments()
     inspec_ke_data = KEDataset(inspec_data_args)
