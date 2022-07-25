@@ -12,6 +12,7 @@ from datasets import load_dataset
 
 from transformerkp.data.base import KPDataset
 from transformerkp.data.extraction.args import KEDataArguments
+from transformerkp.data.extraction import args
 
 logger = logging.getLogger(__name__)
 
@@ -25,18 +26,18 @@ class KEDataset(KPDataset):
     def __init__(self, data_args: KEDataArguments):
         
         super().__init__()
-        self._data_args: KEDataArguments = data_args
+        self.data_args: KEDataArguments = data_args
         self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = None
         self._validation: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = None
         self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = None
         # TODO: needs to be removed. No need of handling it over here
         # self._tokenizer: Any = AutoTokenizer.from_pretrained(data_args.tokenizer, use_fast=True, add_prefix_space=True)
-        self._splits_to_load: Union[List[str], None] = self._data_args.splits
+        self._splits_to_load: Union[List[str], None] = self.data_args.splits
         self._text_column_name: Union[str, None] = (
-            self._data_args.text_column_name if self._data_args is not None else None
+            self.data_args.text_column_name if self.data_args is not None else None
         )
         self._label_column_name: Union[str, None] = (
-            self._data_args.label_column_name if self._data_args is not None else None
+            self.data_args.label_column_name if self.data_args is not None else None
         )
         # TODO: will remove after proper verificiation
         # if self._data_args.max_seq_length is None:
@@ -50,9 +51,9 @@ class KEDataset(KPDataset):
         #     self._data_args.max_seq_length, self._tokenizer.model_max_length
         # )
         self._padding: Union[str, bool] = (
-            "max_length" if self._data_args.pad_to_max_length else False
+            "max_length" if self.data_args.pad_to_max_length else False
         )
-        self.__preprocess_function = self._data_args.preprocess_func
+        self.__preprocess_function = self.data_args.preprocess_func
         self._datasets: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = None
         self.__load_kp_datasets()
 
@@ -108,38 +109,38 @@ class KEDataset(KPDataset):
         """Loads the training, validation and test splits from either an existing dataset from Huggingface hub or from provided files.
 
         """
-        if self._data_args.dataset_name is not None:
-            dataset_splits = get_dataset_split_names(self._data_args.dataset_name, "extraction")
-            self._splits_to_load = list(set(dataset_splits).intersection(set(self._data_args.splits)))
+        if self.data_args.dataset_name is not None:
+            dataset_splits = get_dataset_split_names(self.data_args.dataset_name, "extraction")
+            self._splits_to_load = list(set(dataset_splits).intersection(set(self.data_args.splits)))
             logger.info(f"Only loading the following splits {self._splits_to_load}")
             # Downloading and loading a dataset from the hub.
             self._datasets = load_dataset(
-                self._data_args.dataset_name,
-                self._data_args.dataset_config_name,
+                self.data_args.dataset_name,
+                self.data_args.dataset_config_name,
                 split=self._splits_to_load,
-                cache_dir=self._data_args.cache_dir,
+                cache_dir=self.data_args.cache_dir,
             )
         else:
             # TODO: What if the train, validation and test files are in different formats - we cannot allow it.
             data_files = {}
-            if self._data_args.train_file is not None:
-                data_files["train"] = self._data_args.train_file
-                extension = pathlib.Path(self._data_args.train_file).suffix.replace(".", "")
-                logger.info(f"Loaded training data from {self._data_args.train_file}")
-            if self._data_args.validation_file is not None:
-                data_files["validation"] = self._data_args.validation_file
-                extension = pathlib.Path(self._data_args.validation_file).suffix.replace(".", "")
-                logger.info(f"Loaded validation data from {self._data_args.validation_file}")
-            if self._data_args.test_file is not None:
-                data_files["test"] = self._data_args.test_file
-                extension = pathlib.Path(self._data_args.test_file).suffix.replace(".", "")
-                logger.info(f"Loaded test data from {self._data_args.test_file}")
+            if self.data_args.train_file is not None:
+                data_files["train"] = self.data_args.train_file
+                extension = pathlib.Path(self.data_args.train_file).suffix.replace(".", "")
+                logger.info(f"Loaded training data from {self.data_args.train_file}")
+            if self.data_args.validation_file is not None:
+                data_files["validation"] = self.data_args.validation_file
+                extension = pathlib.Path(self.data_args.validation_file).suffix.replace(".", "")
+                logger.info(f"Loaded validation data from {self.data_args.validation_file}")
+            if self.data_args.test_file is not None:
+                data_files["test"] = self.data_args.test_file
+                extension = pathlib.Path(self.data_args.test_file).suffix.replace(".", "")
+                logger.info(f"Loaded test data from {self.data_args.test_file}")
 
             logger.info(f"Only loading the following splits {self._splits_to_load}")
             self._datasets = load_dataset(
                 extension, 
                 data_files=data_files, 
-                cache_dir=self._data_args.cache_dir,
+                cache_dir=self.data_args.cache_dir,
                 split=self._splits_to_load,
             )
 
@@ -147,7 +148,7 @@ class KEDataset(KPDataset):
             if self._datasets:
                 self._datasets = self._datasets.map(
                     self.__preprocess_function,
-                    num_proc=self._data_args.preprocessing_num_workers,
+                    num_proc=self.data_args.preprocessing_num_workers,
                 )
                 logger.info(f"preprocessing done with the provided customized preprocessing function")
         
@@ -211,76 +212,501 @@ class KEDataset(KPDataset):
         return DatasetDict(data_dict)
 
 
-if __name__ == "__main__":
+class InspecKEDataset(KPDataset):
 
-    # TODO: to be removed. Temporary code for testing the module
-    # testing the general KEDataArguments class
-    from transformerkp.data.extraction.args import KEDataArguments
-    
-    data_args = KEDataArguments(
-        dataset_name="midas/inspec",
-        splits=["train", "test"],
-        cache_dir="/data/hf_datasets"
-    )
+    def __init__(
+            self,
+            splits: list = ["train", "validation", "test"],
+            max_seq_length: int = 512,
+            label_all_tokens: bool = True,
+            cache_dir = None,
+    ):
+        super().__init__()
+        self._data_args: args.InspecKEDataArguments = args.InspecKEDataArguments()
+        self._data_args.splits = splits
+        self._data_args.max_seq_length = max_seq_length
+        self._data_args.label_all_tokens = label_all_tokens
+        self._data_args.cache_dir = cache_dir
+        self._dataset: KEDataset  = KEDataset(self._data_args)
+        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
+        self._validation: Union[
+            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
+        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
 
-    ke_data = KEDataset(data_args)
-    print(ke_data._datasets)
-    print(ke_data.train)
-    print(ke_data.validation)
-    print(ke_data.test)
+    @property
+    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._train
 
-    assert ke_data.test.num_rows == 500
-    assert ke_data.train.num_rows == 1000
-    assert ke_data.validation is None
+    @property
+    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._validation
 
-    # testing out loading of a dataset from user provided files
-    # path to small files for testing the proper loading of custom files to be loaded into a dataset
-    train_file = "../../../tests/resources/data/train.json"
-    validation_file = "../../../tests/resources/data/valid.json"
-    test_file = "../../../tests/resources/data/test.json"
+    @property
+    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._test
 
-    custom_data_args = KEDataArguments(
-        splits=["train", "test"],
-        cache_dir="/data/hf_datasets",
-        train_file=train_file,
-        validation_file=validation_file,
-        test_file=test_file,
-    )
+class NUSKEDataset(KPDataset):
 
-    custom_ke_data = KEDataset(custom_data_args)
-    print(custom_ke_data._datasets)
-    print(custom_ke_data.train)
-    print(custom_ke_data.validation)
-    print(custom_ke_data.test)
+    def __init__(
+            self,
+            splits: list = ["test"],
+            max_seq_length: int = 512,
+            label_all_tokens: bool = True,
+            cache_dir=None,
+    ):
+        super().__init__()
+        self._data_args: args.NUSKEDataArguments = args.NUSKEDataArguments()
+        self._data_args.splits = splits
+        self._dataset: KEDataset = KEDataset(self._data_args)
+        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
+        self._validation: Union[
+            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
+        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
 
-    assert custom_ke_data.test.num_rows == 5
-    assert custom_ke_data.train.num_rows == 20
-    assert custom_ke_data.validation is None
+    @property
+    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._train
 
-    # test custom loading of NUS dataset
-    from transformerkp.data.extraction.args import NUSKEDataArguments
+    @property
+    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._validation
 
-    nus_data_args = NUSKEDataArguments()
-    nus_ke_data = KEDataset(nus_data_args)
-    print(nus_ke_data._datasets)
-    print(nus_ke_data.train)
-    print(nus_ke_data.validation)
-    print(nus_ke_data.test)
+    @property
+    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._test
 
-    assert nus_ke_data.test.num_rows == 211
-    assert nus_ke_data.train is None
-    assert nus_ke_data.validation is None
+class KDDKEDataset(KPDataset):
 
-    # test custom loading of Inspec dataset
-    from transformerkp.data.extraction.args import InspecKEDataArguments
+    def __init__(
+            self,
+            splits: list = ["test"],
+            max_seq_length: int = 512,
+            label_all_tokens: bool = True,
+            cache_dir=None,
+    ):
+        super().__init__()
+        self._data_args: args.KDDKEDataArguments = args.KDDKEDataArguments()
+        self._data_args.splits = splits
+        self._dataset: KEDataset = KEDataset(self._data_args)
+        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
+        self._validation: Union[
+            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
+        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
 
-    inspec_data_args = InspecKEDataArguments()
-    inspec_ke_data = KEDataset(inspec_data_args)
-    print(inspec_ke_data._datasets)
-    print(inspec_ke_data.train)
-    print(inspec_ke_data.validation)
-    print(inspec_ke_data.test)
+    @property
+    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._train
 
-    assert inspec_ke_data.test.num_rows == 500
-    assert inspec_ke_data.train.num_rows == 1000
-    assert inspec_ke_data.validation.num_rows == 500
+    @property
+    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._validation
+
+    @property
+    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._test
+
+class KrapivinKEDataset(KPDataset):
+
+    def __init__(
+            self,
+            splits: list = ["test"],
+            max_seq_length: int = 512,
+            label_all_tokens: bool = True,
+            cache_dir=None,
+    ):
+        super().__init__()
+        self._data_args: args.KrapivinKEDataArguments = args.KrapivinKEDataArguments()
+        self._data_args.splits = splits
+        self._dataset: KEDataset = KEDataset(self._data_args)
+        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
+        self._validation: Union[
+            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
+        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+
+    @property
+    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._train
+
+    @property
+    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._validation
+
+    @property
+    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._test
+
+
+class KP20KKEDataset(KPDataset):
+
+    def __init__(
+            self,
+            splits: list = ["train", "validation", "test"],
+            max_seq_length: int = 512,
+            label_all_tokens: bool = True,
+            cache_dir=None,
+    ):
+        super().__init__()
+        self._data_args: args.KP20KKEDataArguments = args.KP20KKEDataArguments()
+        self._data_args.splits = splits
+        self._dataset: KEDataset  = KEDataset(self._data_args)
+        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
+        self._validation: Union[
+            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
+        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+
+    @property
+    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._train
+
+    @property
+    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._validation
+
+    @property
+    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._test
+
+class WWWKEDataset(KPDataset):
+
+    def __init__(
+            self,
+            splits: list = ["test"],
+            max_seq_length: int = 512,
+            label_all_tokens: bool = True,
+            cache_dir=None,
+    ):
+        super().__init__()
+        self._data_args: args.WWWKEDataArguments = args.WWWKEDataArguments()
+        self._data_args.splits = splits
+        self._dataset: KEDataset = KEDataset(self._data_args)
+        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
+        self._validation: Union[
+            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
+        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+
+    @property
+    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._train
+
+    @property
+    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._validation
+
+    @property
+    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._test
+
+
+class LDKP3KSmallKEDataset(KEDataset):
+
+    def __init__(self):
+        super().__init__(data_args=args.LDKP3KSmallKEDataArguments())
+
+class LDKP3KMediumKEDataset(KEDataset):
+
+    def __init__(self):
+        super().__init__(data_args=args.LDKP3KMediumKEDataArguments())
+
+class LDKP3KLargeKEDataset(KEDataset):
+
+    def __init__(self):
+        super().__init__(data_args=args.LDKP3KLargeKEDataArguments())
+
+
+class LDKP10KSmallKEDataset(KEDataset):
+
+    def __init__(self):
+        super().__init__(data_args=args.LDKP10KSmallKEDataArguments())
+
+
+class LDKP10KMediumKEDataset(KEDataset):
+
+    def __init__(self):
+        super().__init__(data_args=args.LDKP10KMediumKEDataArguments())
+
+
+class LDKP10KLargeKEDataset(KEDataset):
+
+    def __init__(self):
+        super().__init__(data_args=args.LDKP10KLargeKEDataArguments())
+
+
+class KPTimesKEDataset(KPDataset):
+
+    def __init__(
+            self,
+            splits: list = ["train", "validation", "test"],
+            max_seq_length: int = 512,
+            label_all_tokens: bool = True,
+            cache_dir=None,
+    ):
+        super().__init__()
+        self._data_args: args.KPTimesKEDataArguments = args.KPTimesKEDataArguments()
+        self._data_args.splits = splits
+        self._dataset: KEDataset  = KEDataset(self._data_args)
+        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
+        self._validation: Union[
+            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
+        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+
+    @property
+    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._train
+
+    @property
+    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._validation
+
+    @property
+    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._test
+
+
+class OpenKPKEDataset(KPDataset):
+
+    def __init__(
+            self,
+            splits: list = ["train", "validation", "test"],
+            max_seq_length: int = 512,
+            label_all_tokens: bool = True,
+            cache_dir=None,
+    ):
+        super().__init__()
+        self._data_args: args.OpenKPKEDataArguments = args.OpenKPKEDataArguments()
+        self._data_args.splits = splits
+        self._dataset: KEDataset  = KEDataset(self._data_args)
+        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
+        self._validation: Union[
+            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
+        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+
+    @property
+    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._train
+
+    @property
+    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._validation
+
+    @property
+    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._test
+
+
+class SemEval2010KEDataset(KPDataset):
+
+    def __init__(
+            self,
+            splits: list = ["train", "test"],
+            max_seq_length: int = 512,
+            label_all_tokens: bool = True,
+            cache_dir=None,
+    ):
+        super().__init__()
+        self._data_args: args.SemEval2010KEDataArguments = args.SemEval2010KEDataArguments()
+        self._data_args.splits = splits
+        self._dataset: KEDataset  = KEDataset(self._data_args)
+        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
+        self._validation: Union[
+            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
+        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+
+    @property
+    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._train
+
+    @property
+    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._validation
+
+    @property
+    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._test
+
+
+class SemEval2017KEDataset(KPDataset):
+
+    def __init__(
+            self,
+            splits: list = ["train", "validation", "test"],
+            max_seq_length: int = 512,
+            label_all_tokens: bool = True,
+            cache_dir=None,
+    ):
+        super().__init__()
+        self._data_args: args.SemEval2017DataArguments = args.SemEval2017KEDataArguments()
+        self._data_args.splits = splits
+        self._dataset: KEDataset  = KEDataset(self._data_args)
+        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
+        self._validation: Union[
+            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
+        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+
+    @property
+    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._train
+
+    @property
+    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._validation
+
+    @property
+    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._test
+
+
+class KPCrowdKEDataset(KPDataset):
+
+    def __init__(
+            self,
+            splits: list = ["train", "test"],
+            max_seq_length: int = 512,
+            label_all_tokens: bool = True,
+            cache_dir=None,
+    ):
+        super().__init__()
+        self._data_args: args.KPCrowdKEDataArguments = args.KPCrowdKEDataArguments()
+        self._data_args.splits = splits
+        self._dataset: KEDataset = KEDataset(self._data_args)
+        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
+        self._validation: Union[
+            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
+        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+
+    @property
+    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._train
+
+    @property
+    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._validation
+
+    @property
+    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._test
+
+
+class DUC2001KEDataset(KPDataset):
+
+    def __init__(
+            self,
+            splits: list = ["test"],
+            max_seq_length: int = 512,
+            label_all_tokens: bool = True,
+            cache_dir=None,
+    ):
+        super().__init__()
+        self._data_args: args.KPCrowdKEDataArguments = args.DUC2001KEDataArguments()
+        self._data_args.splits = splits
+        self._dataset: KEDataset = KEDataset(self._data_args)
+        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
+        self._validation: Union[
+            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
+        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+
+    @property
+    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._train
+
+    @property
+    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._validation
+
+    @property
+    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._test
+
+
+
+class CSTRKEDataset(KPDataset):
+
+    def __init__(
+            self,
+            splits: list = ["train", "test"],
+            max_seq_length: int = 512,
+            label_all_tokens: bool = True,
+            cache_dir=None,
+    ):
+        super().__init__()
+        self._data_args: args.CSTRKEDataArguments = args.CSTRKEDataArguments()
+        self._data_args.splits = splits
+        self._dataset: KEDataset = KEDataset(self._data_args)
+        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
+        self._validation: Union[
+            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
+        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+
+    @property
+    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._train
+
+    @property
+    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._validation
+
+    @property
+    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._test
+
+
+class PubMedKEDataset(KPDataset):
+
+    def __init__(
+            self,
+            splits: list = ["test"],
+            max_seq_length: int = 512,
+            label_all_tokens: bool = True,
+            cache_dir=None,
+    ):
+        super().__init__()
+        self._data_args: args.PubMedKEDataArguments = args.PubMedKEDataArguments()
+        self._data_args.splits = splits
+        self._dataset: KEDataset = KEDataset(self._data_args)
+        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
+        self._validation: Union[
+            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
+        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+
+    @property
+    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._train
+
+    @property
+    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._validation
+
+    @property
+    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._test
+
+
+class CiteulikeKEDataset(KPDataset):
+
+    def __init__(
+            self,
+            splits: list = ["test"],
+            max_seq_length: int = 512,
+            label_all_tokens: bool = True,
+            cache_dir=None,
+    ):
+        super().__init__()
+        self._data_args: args.CiteulikeKEDataArguments = args.CiteulikeKEDataArguments()
+        self._data_args.splits = splits
+        self._dataset: KEDataset = KEDataset(self._data_args)
+        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
+        self._validation: Union[
+            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
+        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+
+    @property
+    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._train
+
+    @property
+    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._validation
+
+    @property
+    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+        return self._test
+

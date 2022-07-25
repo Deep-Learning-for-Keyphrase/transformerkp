@@ -1,10 +1,18 @@
 import pytest
-from dataclasses import dataclass
 
-from transformerkp.data.extraction.process import KEDataset
 from transformerkp.data.extraction.args import KEDataArguments
 from transformerkp.data.extraction.args import InspecKEDataArguments
 from transformerkp.data.extraction.args import NUSKEDataArguments
+from transformerkp.data.extraction.process import KEDataset
+from transformerkp.data.extraction.process import InspecKEDataset
+from transformerkp.data.extraction.process import NUSKEDataset
+from transformerkp.data.extraction.process import KDDKEDataset
+from transformerkp.data.extraction.process import KPCrowdKEDataset
+from transformerkp.data.extraction.process import SemEval2017KEDataset
+from transformerkp.data.extraction.process import SemEval2010KEDataset
+from transformerkp.data.extraction.process import DUC2001KEDataset
+from transformerkp.data.extraction.process import CSTRKEDataset
+from transformerkp.data.extraction.process import PubMedKEDataset
 
 
 @pytest.fixture
@@ -19,9 +27,9 @@ def ke_data_arg_for_download_from_hf():
 @pytest.fixture
 def data_files():
     class DataFile:
-        train_file: str = "resources/data/train.json"
-        validation_file: str = "resources/data/valid.json"
-        test_file: str = "resources/data/test.json"
+        train_file: str = "./resources/data/train.json"
+        validation_file: str = "./resources/data/valid.json"
+        test_file: str = "./resources/data/test.json"
 
     return DataFile()
 
@@ -107,3 +115,74 @@ def test_inspec_ke_data_load_from_hf():
     assert inspec_ke_data.test.num_rows == 500
     assert inspec_ke_data.train.num_rows == 1000
     assert inspec_ke_data.validation.num_rows == 500
+
+
+def test_inspec_ke_data_load():
+    inspec_ke_data = InspecKEDataset()
+
+    assert inspec_ke_data.train.num_rows == 1000
+    assert inspec_ke_data.validation.num_rows == 500
+    assert inspec_ke_data.test.num_rows == 500
+
+    # load with splits
+    inspec_ke_data = InspecKEDataset(splits=["train", "test"])
+
+    assert inspec_ke_data.train.num_rows == 1000
+    assert inspec_ke_data.validation is None
+    assert inspec_ke_data.test.num_rows == 500
+
+
+def test_nus_ke_data_load():
+    nus_ke_data = NUSKEDataset()
+    assert nus_ke_data.train is None
+    assert nus_ke_data.validation is None
+    assert nus_ke_data.test.num_rows == 211
+
+
+def test_duc2001_ke_data_load():
+    duc_ke_data = DUC2001KEDataset()
+    assert duc_ke_data.train is None
+    assert duc_ke_data.validation is None
+    assert duc_ke_data.test.num_rows == 308
+
+
+def test_kdd_ke_data_load():
+    kdd_ke_data = KDDKEDataset()
+    assert kdd_ke_data.train is None
+    assert kdd_ke_data.validation is None
+    assert kdd_ke_data.test.num_rows == 755
+
+
+def test_kpcrowd_ke_data_load():
+    kpcrowd_ke_data = KPCrowdKEDataset()
+    assert kpcrowd_ke_data.train.num_rows == 450
+    assert kpcrowd_ke_data.validation is None
+    assert kpcrowd_ke_data.test.num_rows == 50
+
+
+def test_cstr_ke_data_load():
+    cstr_ke_data = CSTRKEDataset()
+    assert cstr_ke_data.train.num_rows == 130
+    assert cstr_ke_data.validation is None
+    assert cstr_ke_data.test.num_rows == 500
+
+
+def test_pubmed_ke_data_load():
+    pubmed_ke_data = PubMedKEDataset()
+    assert pubmed_ke_data.train is None
+    assert pubmed_ke_data.validation is None
+    assert pubmed_ke_data.test.num_rows == 1320
+
+
+def test_semeval2017_ke_data_load():
+    semeval2017_ke_data = SemEval2017KEDataset()
+    assert semeval2017_ke_data.train.num_rows == 350
+    assert semeval2017_ke_data.validation.num_rows == 50
+    assert semeval2017_ke_data.test.num_rows == 100
+
+
+def test_semeval2010_ke_data_load():
+    semeval2010_ke_data = SemEval2010KEDataset()
+    assert semeval2010_ke_data.train.num_rows == 144
+    assert semeval2010_ke_data.validation is None
+    assert semeval2010_ke_data.test.num_rows == 100
