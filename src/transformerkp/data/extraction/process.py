@@ -213,7 +213,7 @@ class KEDataset(KPDataset):
 
 
 class InspecKEDataset(KPDataset):
-
+    """"""
     def __init__(
             self,
             splits: list = ["train", "validation", "test"],
@@ -221,6 +221,14 @@ class InspecKEDataset(KPDataset):
             label_all_tokens: bool = True,
             cache_dir = None,
     ):
+        """
+
+        Args:
+            splits:
+            max_seq_length:
+            label_all_tokens:
+            cache_dir:
+        """
         super().__init__()
         self._data_args: args.InspecKEDataArguments = args.InspecKEDataArguments()
         self._data_args.splits = splits
@@ -246,7 +254,7 @@ class InspecKEDataset(KPDataset):
         return self._test
 
 class NUSKEDataset(KPDataset):
-
+    """"""
     def __init__(
             self,
             splits: list = ["test"],
@@ -254,6 +262,14 @@ class NUSKEDataset(KPDataset):
             label_all_tokens: bool = True,
             cache_dir=None,
     ):
+        """
+
+        Args:
+            splits:
+            max_seq_length:
+            label_all_tokens:
+            cache_dir:
+        """
         super().__init__()
         self._data_args: args.NUSKEDataArguments = args.NUSKEDataArguments()
         self._data_args.splits = splits
@@ -276,7 +292,7 @@ class NUSKEDataset(KPDataset):
         return self._test
 
 class KDDKEDataset(KPDataset):
-
+    """"""
     def __init__(
             self,
             splits: list = ["test"],
@@ -284,6 +300,14 @@ class KDDKEDataset(KPDataset):
             label_all_tokens: bool = True,
             cache_dir=None,
     ):
+        """
+
+        Args:
+            splits:
+            max_seq_length:
+            label_all_tokens:
+            cache_dir:
+        """
         super().__init__()
         self._data_args: args.KDDKEDataArguments = args.KDDKEDataArguments()
         self._data_args.splits = splits
@@ -306,7 +330,7 @@ class KDDKEDataset(KPDataset):
         return self._test
 
 class KrapivinKEDataset(KPDataset):
-
+    """"""
     def __init__(
             self,
             splits: list = ["test"],
@@ -314,6 +338,14 @@ class KrapivinKEDataset(KPDataset):
             label_all_tokens: bool = True,
             cache_dir=None,
     ):
+        """
+
+        Args:
+            splits:
+            max_seq_length:
+            label_all_tokens:
+            cache_dir:
+        """
         super().__init__()
         self._data_args: args.KrapivinKEDataArguments = args.KrapivinKEDataArguments()
         self._data_args.splits = splits
@@ -337,7 +369,7 @@ class KrapivinKEDataset(KPDataset):
 
 
 class KP20KKEDataset(KPDataset):
-
+    """"""
     def __init__(
             self,
             splits: list = ["train", "validation", "test"],
@@ -345,6 +377,14 @@ class KP20KKEDataset(KPDataset):
             label_all_tokens: bool = True,
             cache_dir=None,
     ):
+        """
+
+        Args:
+            splits:
+            max_seq_length:
+            label_all_tokens:
+            cache_dir:
+        """
         super().__init__()
         self._data_args: args.KP20KKEDataArguments = args.KP20KKEDataArguments()
         self._data_args.splits = splits
@@ -367,7 +407,7 @@ class KP20KKEDataset(KPDataset):
         return self._test
 
 class WWWKEDataset(KPDataset):
-
+    """"""
     def __init__(
             self,
             splits: list = ["test"],
@@ -375,6 +415,14 @@ class WWWKEDataset(KPDataset):
             label_all_tokens: bool = True,
             cache_dir=None,
     ):
+        """
+
+        Args:
+            splits:
+            max_seq_length:
+            label_all_tokens:
+            cache_dir:
+        """
         super().__init__()
         self._data_args: args.WWWKEDataArguments = args.WWWKEDataArguments()
         self._data_args.splits = splits
@@ -398,41 +446,41 @@ class WWWKEDataset(KPDataset):
 
 
 class LDKP3KSmallKEDataset(KEDataset):
-
+    """"""
     def __init__(self):
         super().__init__(data_args=args.LDKP3KSmallKEDataArguments())
 
 class LDKP3KMediumKEDataset(KEDataset):
-
+    """"""
     def __init__(self):
         super().__init__(data_args=args.LDKP3KMediumKEDataArguments())
 
 class LDKP3KLargeKEDataset(KEDataset):
-
+    """"""
     def __init__(self):
         super().__init__(data_args=args.LDKP3KLargeKEDataArguments())
 
 
 class LDKP10KSmallKEDataset(KEDataset):
-
+    """"""
     def __init__(self):
         super().__init__(data_args=args.LDKP10KSmallKEDataArguments())
 
 
 class LDKP10KMediumKEDataset(KEDataset):
-
+    """"""
     def __init__(self):
         super().__init__(data_args=args.LDKP10KMediumKEDataArguments())
 
 
 class LDKP10KLargeKEDataset(KEDataset):
-
+    """"""
     def __init__(self):
         super().__init__(data_args=args.LDKP10KLargeKEDataArguments())
 
 
 class KPTimesKEDataset(KPDataset):
-
+    """"""
     def __init__(
             self,
             splits: list = ["train", "validation", "test"],
@@ -440,6 +488,14 @@ class KPTimesKEDataset(KPDataset):
             label_all_tokens: bool = True,
             cache_dir=None,
     ):
+        """
+
+        Args:
+            splits:
+            max_seq_length:
+            label_all_tokens:
+            cache_dir:
+        """
         super().__init__()
         self._data_args: args.KPTimesKEDataArguments = args.KPTimesKEDataArguments()
         self._data_args.splits = splits
@@ -463,7 +519,7 @@ class KPTimesKEDataset(KPDataset):
 
 
 class OpenKPKEDataset(KPDataset):
-
+    """"""
     def __init__(
             self,
             splits: list = ["train", "validation", "test"],
@@ -471,6 +527,14 @@ class OpenKPKEDataset(KPDataset):
             label_all_tokens: bool = True,
             cache_dir=None,
     ):
+        """
+
+        Args:
+            splits:
+            max_seq_length:
+            label_all_tokens:
+            cache_dir:
+        """
         super().__init__()
         self._data_args: args.OpenKPKEDataArguments = args.OpenKPKEDataArguments()
         self._data_args.splits = splits
@@ -494,7 +558,7 @@ class OpenKPKEDataset(KPDataset):
 
 
 class SemEval2010KEDataset(KPDataset):
-
+    """"""
     def __init__(
             self,
             splits: list = ["train", "test"],
@@ -502,6 +566,14 @@ class SemEval2010KEDataset(KPDataset):
             label_all_tokens: bool = True,
             cache_dir=None,
     ):
+        """
+
+        Args:
+            splits:
+            max_seq_length:
+            label_all_tokens:
+            cache_dir:
+        """
         super().__init__()
         self._data_args: args.SemEval2010KEDataArguments = args.SemEval2010KEDataArguments()
         self._data_args.splits = splits
@@ -525,7 +597,7 @@ class SemEval2010KEDataset(KPDataset):
 
 
 class SemEval2017KEDataset(KPDataset):
-
+    """"""
     def __init__(
             self,
             splits: list = ["train", "validation", "test"],
@@ -533,6 +605,14 @@ class SemEval2017KEDataset(KPDataset):
             label_all_tokens: bool = True,
             cache_dir=None,
     ):
+        """
+
+        Args:
+            splits:
+            max_seq_length:
+            label_all_tokens:
+            cache_dir:
+        """
         super().__init__()
         self._data_args: args.SemEval2017DataArguments = args.SemEval2017KEDataArguments()
         self._data_args.splits = splits
@@ -556,7 +636,7 @@ class SemEval2017KEDataset(KPDataset):
 
 
 class KPCrowdKEDataset(KPDataset):
-
+    """"""
     def __init__(
             self,
             splits: list = ["train", "test"],
@@ -564,6 +644,14 @@ class KPCrowdKEDataset(KPDataset):
             label_all_tokens: bool = True,
             cache_dir=None,
     ):
+        """
+
+        Args:
+            splits:
+            max_seq_length:
+            label_all_tokens:
+            cache_dir:
+        """
         super().__init__()
         self._data_args: args.KPCrowdKEDataArguments = args.KPCrowdKEDataArguments()
         self._data_args.splits = splits
@@ -587,7 +675,7 @@ class KPCrowdKEDataset(KPDataset):
 
 
 class DUC2001KEDataset(KPDataset):
-
+    """"""
     def __init__(
             self,
             splits: list = ["test"],
@@ -595,6 +683,14 @@ class DUC2001KEDataset(KPDataset):
             label_all_tokens: bool = True,
             cache_dir=None,
     ):
+        """
+
+        Args:
+            splits:
+            max_seq_length:
+            label_all_tokens:
+            cache_dir:
+        """
         super().__init__()
         self._data_args: args.KPCrowdKEDataArguments = args.DUC2001KEDataArguments()
         self._data_args.splits = splits
@@ -619,7 +715,7 @@ class DUC2001KEDataset(KPDataset):
 
 
 class CSTRKEDataset(KPDataset):
-
+    """"""
     def __init__(
             self,
             splits: list = ["train", "test"],
@@ -627,6 +723,14 @@ class CSTRKEDataset(KPDataset):
             label_all_tokens: bool = True,
             cache_dir=None,
     ):
+        """
+
+        Args:
+            splits:
+            max_seq_length:
+            label_all_tokens:
+            cache_dir:
+        """
         super().__init__()
         self._data_args: args.CSTRKEDataArguments = args.CSTRKEDataArguments()
         self._data_args.splits = splits
@@ -650,7 +754,7 @@ class CSTRKEDataset(KPDataset):
 
 
 class PubMedKEDataset(KPDataset):
-
+    """"""
     def __init__(
             self,
             splits: list = ["test"],
@@ -658,6 +762,14 @@ class PubMedKEDataset(KPDataset):
             label_all_tokens: bool = True,
             cache_dir=None,
     ):
+        """
+
+        Args:
+            splits:
+            max_seq_length:
+            label_all_tokens:
+            cache_dir:
+        """
         super().__init__()
         self._data_args: args.PubMedKEDataArguments = args.PubMedKEDataArguments()
         self._data_args.splits = splits
@@ -681,7 +793,7 @@ class PubMedKEDataset(KPDataset):
 
 
 class CiteulikeKEDataset(KPDataset):
-
+    """"""
     def __init__(
             self,
             splits: list = ["test"],
@@ -689,6 +801,14 @@ class CiteulikeKEDataset(KPDataset):
             label_all_tokens: bool = True,
             cache_dir=None,
     ):
+        """
+
+        Args:
+            splits:
+            max_seq_length:
+            label_all_tokens:
+            cache_dir:
+        """
         super().__init__()
         self._data_args: args.CiteulikeKEDataArguments = args.CiteulikeKEDataArguments()
         self._data_args.splits = splits
