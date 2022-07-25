@@ -120,11 +120,3 @@ def tokenize_and_align_labels(
         num_proc=num_workers,
         load_from_cache_file=not overwrite_cache,
     )
-
-
-if __name__ == "__main__":
-    txt = ['transformerkp', 'is', 'an', 'awesome', 'library']
-    tokenizer = AutoTokenizer.from_pretrained('roberta-base', use_fast=True, add_prefix_space=True)
-    print(tokenize_text(txt=txt, tokenizer=tokenizer, max_seq_len=10))
-    tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased', use_fast=True, add_prefix_space=True)
-    print(tokenize_text(txt=txt, tokenizer=tokenizer, max_seq_len=10))
