@@ -1,0 +1,21 @@
+site_name: transformerkp
+
+theme:
+  name: material
+
+plugins:
+  - mkdocstrings
+
+nav:
+  - Welcome: index.md
+  - Getting started: getting-started.md
+  - How-To Guides: how-to-guides.md
+  - Reference:
+    - transformerkp: 
+      - data:
+        - args: reference/data/args.md
+        - base: reference/data/base.md
+        - extraction: reference/data/extraction.md
+        - generation: reference/data/generation.md
+        - preprocessing: reference/data/preprocessing.md
+  
