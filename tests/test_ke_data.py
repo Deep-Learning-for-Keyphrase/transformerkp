@@ -1,18 +1,18 @@
 import pytest
 
-from transformerkp.data.extraction.args import KEDataArguments
-from transformerkp.data.extraction.args import InspecKEDataArguments
-from transformerkp.data.extraction.args import NUSKEDataArguments
-from transformerkp.data.extraction.loader import KEDataset
-from transformerkp.data.extraction.loader import InspecKEDataset
-from transformerkp.data.extraction.loader import NUSKEDataset
-from transformerkp.data.extraction.loader import KDDKEDataset
-from transformerkp.data.extraction.loader import KPCrowdKEDataset
-from transformerkp.data.extraction.loader import SemEval2017KEDataset
-from transformerkp.data.extraction.loader import SemEval2010KEDataset
-from transformerkp.data.extraction.loader import DUC2001KEDataset
-from transformerkp.data.extraction.loader import CSTRKEDataset
-from transformerkp.data.extraction.loader import PubMedKEDataset
+from transformerkp.data.extraction.ke_data_args import KEDataArguments
+from transformerkp.data.extraction.ke_data_args import InspecKEDataArguments
+from transformerkp.data.extraction.ke_data_args import NUSKEDataArguments
+from transformerkp.data.extraction.ke_data_loader import KEDataset
+from transformerkp.data.extraction.ke_data_loader import InspecKEDataset
+from transformerkp.data.extraction.ke_data_loader import NUSKEDataset
+from transformerkp.data.extraction.ke_data_loader import KDDKEDataset
+from transformerkp.data.extraction.ke_data_loader import KPCrowdKEDataset
+from transformerkp.data.extraction.ke_data_loader import SemEval2017KEDataset
+from transformerkp.data.extraction.ke_data_loader import SemEval2010KEDataset
+from transformerkp.data.extraction.ke_data_loader import DUC2001KEDataset
+from transformerkp.data.extraction.ke_data_loader import CSTRKEDataset
+from transformerkp.data.extraction.ke_data_loader import PubMedKEDataset
 
 
 @pytest.fixture

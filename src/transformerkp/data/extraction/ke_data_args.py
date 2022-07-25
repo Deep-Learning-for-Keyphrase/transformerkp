@@ -2,59 +2,19 @@ import pathlib
 from dataclasses import dataclass, field
 from typing import Optional, Callable, List
 
+from transformerkp.data.base import KPDataArguments
+
 
 @dataclass
-class KEDataArguments:
+class KEDataArguments(KPDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction.
-    Parent class for all the child classes for specific datasets. All the child dataset argument classes should extend
-    this class for accommodating the arguments relevant and specific to them.
     """
 
-    dataset_name: Optional[str] = field(
-        default=None,
-        metadata={
-            "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
-        },
-    )
-    dataset_config_name: Optional[str] = field(
-        default="extraction",
-        metadata={
-            "help": "(Optional) The configuration name of the dataset to use via the "
-            "Huggingface data library (https://github.com/huggingface/datasets)."
-        },
-    )
     preprocess_func: Optional[Callable] = field(
         default=None,
         metadata={
             "help": "(Optional) A function to preprocess the dataset, which take a KEDataset object as input and "
             "return two columns text_column_name and label_column_name."
-        },
-    )
-    train_file: Optional[str] = field(
-        default=None,
-        metadata={
-            "help": "(Optional) Path to the training data file (csv or JSON file). This is only needed for data "
-            "that are not available in the Huggingface hub or for custom data."
-        },
-    )
-    validation_file: Optional[str] = field(
-        default=None,
-        metadata={
-            "help": "(Optional) Path to the evaluation data file to evaluate on (csv or JSON file)."
-        },
-    )
-    test_file: Optional[str] = field(
-        default=None,
-        metadata={
-            "help": "(Optional) Path to the input test data file to predict on (a csv or JSON file)."
-        },
-    )
-    text_column_name: Optional[str] = field(
-        default="document",
-        metadata={
-            "help": "(Optional) Name of the column containing the input text from which keyphrases needs to be "
-            "extracted."
         },
     )
     label_column_name: Optional[str] = field(
@@ -63,39 +23,27 @@ class KEDataArguments:
             "help": "(Optional) Name of the column name containing the BIO labels required for keyphrase extraction."
         },
     )
-    # TODO: incorporate percentage of each data split to be loaded, currently this parameter is not used anywhere
-    train_data_percent: Optional[int] = field(
-        default=0,
-        metadata={
-            "help": "(Optional) Percentage of training data to be used for training."
-        },
-    )
-    # TODO: incorporate percentage of each data split to be loaded, currently this parameter is not used anywhere
-    valid_data_percent: Optional[int] = field(
-        default=0,
-        metadata={
-            "help": "(Optional) Percentage of validation data to be used during validation."
-        },
-    )
-    # TODO: incorporate percentage of each data split to be loaded, currently this parameter is not used anywhere
-    test_data_percent: Optional[int] = field(
-        default=0,
-        metadata={
-            "help": "(Optional) Percentage of test data to be used during test evaluation."
-        },
-    )
-    overwrite_cache: bool = field(
-        default=False,
-        metadata={
-            "help": "(Optional) Overwrite the cached training and evaluation sets"
-        },
-    )
-    preprocessing_num_workers: Optional[int] = field(
-        default=None,
-        metadata={
-            "help": "(Optional) The number of workers to be used during preprocessing of the data."
-        },
-    )
+    # # TODO: incorporate percentage of each data split to be loaded, currently this parameter is not used anywhere
+    # train_data_percent: Optional[int] = field(
+    #     default=0,
+    #     metadata={
+    #         "help": "(Optional) Percentage of training data to be used for training."
+    #     },
+    # )
+    # # TODO: incorporate percentage of each data split to be loaded, currently this parameter is not used anywhere
+    # valid_data_percent: Optional[int] = field(
+    #     default=0,
+    #     metadata={
+    #         "help": "(Optional) Percentage of validation data to be used during validation."
+    #     },
+    # )
+    # # TODO: incorporate percentage of each data split to be loaded, currently this parameter is not used anywhere
+    # test_data_percent: Optional[int] = field(
+    #     default=0,
+    #     metadata={
+    #         "help": "(Optional) Percentage of test data to be used during test evaluation."
+    #     },
+    # )
     max_seq_length: int = field(
         default=512,
         metadata={
@@ -125,27 +73,6 @@ class KEDataArguments:
     #         "help": "Whether to return all the entity levels during evaluation or just the overall ones."
     #     },
     # )
-    cache_file_name: Optional[str] = field(
-        default=None,
-        metadata={
-            "help": "(Optional) Provide the name of a path for the cache file. It is used to store the results of the "
-            "computation instead of the automatically generated cache file name."
-        },
-    )
-    cache_dir: Optional[str] = field(
-        default=None,
-        metadata={
-            "help": "(Optional) Provide the name of a path for the cache dir. It is used to store the results of the "
-            "computation."
-        },
-    )
-    splits: Optional[List[str]] = field(
-        default_factory=lambda: ['train', 'validation', 'test'],
-        metadata={
-            "help": """(Optional) Names of the data splits to be loaded. For example, sometimes, one might only need to load 
-            the test split of the data."""
-        },
-    )
 
     def __post_init__(self):
         if (
