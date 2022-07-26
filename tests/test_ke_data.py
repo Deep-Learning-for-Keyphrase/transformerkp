@@ -106,6 +106,7 @@ def test_nus_ke_data_load_from_hf():
     assert nus_ke_data.validation is None
 
 
+# TODO: we need to figure out how to write test cases for the larger datasets
 # test predefined loading of Inspec dataset from huggingface hub
 def test_inspec_ke_data_load_from_hf():
     inspec_data_args = InspecKEDataArguments()

@@ -47,13 +47,6 @@ class KPDataArguments:
             "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
         },
     )
-    dataset_config_name: Optional[str] = field(
-        default="extraction",
-        metadata={
-            "help": "(Optional) The configuration name of the dataset to use via the "
-            "Huggingface data library (https://github.com/huggingface/datasets)."
-        },
-    )
     train_file: Optional[str] = field(
         default=None,
         metadata={
@@ -111,5 +104,12 @@ class KPDataArguments:
         metadata={
             "help": """(Optional) Names of the data splits to be loaded. For example, sometimes, one might only need 
             to load the test split of the data."""
+        },
+    )
+    max_seq_length: int = field(
+        default=512,
+        metadata={
+            "help": "The maximum total input sequence length after tokenization. Sequences longer "
+            "than this will be truncated, sequences shorter will be padded."
         },
     )

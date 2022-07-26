@@ -23,6 +23,13 @@ class KEDataArguments(KPDataArguments):
             "help": "(Optional) Name of the column name containing the BIO labels required for keyphrase extraction."
         },
     )
+    dataset_config_name: Optional[str] = field(
+        default="extraction",
+        metadata={
+            "help": "(Optional) The configuration name of the dataset to use via the "
+            "Huggingface data library (https://github.com/huggingface/datasets)."
+        },
+    )
     # # TODO: incorporate percentage of each data split to be loaded, currently this parameter is not used anywhere
     # train_data_percent: Optional[int] = field(
     #     default=0,
@@ -44,13 +51,6 @@ class KEDataArguments(KPDataArguments):
     #         "help": "(Optional) Percentage of test data to be used during test evaluation."
     #     },
     # )
-    max_seq_length: int = field(
-        default=512,
-        metadata={
-            "help": "The maximum total input sequence length after tokenization. Sequences longer "
-            "than this will be truncated, sequences shorter will be padded."
-        },
-    )
     pad_to_max_length: bool = field(
         default=True,
         metadata={

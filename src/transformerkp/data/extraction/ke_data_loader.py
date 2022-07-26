@@ -23,7 +23,7 @@ class KEDataset(KPDataset):
     _id_to_label: Dict = {0: "B", 1: "I", 2: "O"}
     _num_labels: int = 3
 
-    def __init__(self, data_args: KEDataArguments):
+    def __init__(self, data_args: KEDataArguments) -> None:
         
         super().__init__()
         self.data_args: KEDataArguments = data_args
@@ -47,15 +47,13 @@ class KEDataset(KPDataset):
         #         f"The max_seq_length passed ({self._data_args.max_seq_length}) is larger than the maximum length for the"
         #         f"model ({self._tokenizer.model_max_length}). Using max_seq_length={self._tokenizer.model_max_length}."
         #     )
-        # self._max_seq_length: int = min(
-        #     self._data_args.max_seq_length, self._tokenizer.model_max_length
-        # )
+        self._max_seq_length: int = self.data_args.max_seq_length
         self._padding: Union[str, bool] = (
             "max_length" if self.data_args.pad_to_max_length else False
         )
-        self.__preprocess_function = self.data_args.preprocess_func
+        self.__preprocess_function: Union[Callable, None] = self.data_args.preprocess_func
         self._datasets: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = None
-        self.__load_kp_datasets()
+        self.__load_ke_datasets()
 
     @property
     def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
@@ -105,7 +103,7 @@ class KEDataset(KPDataset):
         """Gets the max sequence length to be used while preprocessing the dataset for training and evaluation"""
         return self._max_seq_length
 
-    def __load_kp_datasets(self) -> None:
+    def __load_ke_datasets(self) -> None:
         """Loads the training, validation and test splits from either an existing dataset from Huggingface hub or from provided files.
 
         """
