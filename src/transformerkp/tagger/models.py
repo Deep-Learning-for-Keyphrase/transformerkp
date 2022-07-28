@@ -5,7 +5,7 @@ from .crf import ConditionalRandomField
 from torch import nn
 
 
-class PreTrainedModelForKpExtraction(PreTrainedModel):
+class PretrainedModelForKPExtraction(PreTrainedModel):
     def _init_weights(self, module):
         """Initialize the weights"""
         if isinstance(module, nn.Linear):
@@ -23,11 +23,11 @@ class PreTrainedModelForKpExtraction(PreTrainedModel):
             module.weight.data.fill_(1.0)
 
 
-class AutoModelForKpExtraction(AutoModelForTokenClassification):
+class AutoModelForKPExtraction(AutoModelForTokenClassification):
     pass
 
 
-class AutoCrfModelforKpExtraction(PreTrainedModelForKpExtraction):
+class AutoCRFModelforKPExtraction(PretrainedModelForKPExtraction):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels

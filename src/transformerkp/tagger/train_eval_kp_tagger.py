@@ -35,7 +35,7 @@ from transformers import AutoConfig, AutoTokenizer, set_seed, HfArgumentParser
 from transformers.trainer_utils import get_last_checkpoint, is_main_process
 
 from .trainer import KpExtractionTrainer, CrfKpExtractionTrainer
-from .models import AutoModelForKpExtraction, AutoCrfModelforKpExtraction
+from .models import AutoModelForKPExtraction, AutoCRFModelforKPExtraction
 from .utils import KEDataArguments, KEModelArguments, KETrainingArguments
 from .data_collators import DataCollatorForKpExtraction
 from ..metrics.metrics import compute_metrics, compute_kp_level_metrics
@@ -131,7 +131,7 @@ def train_eval_extraction_model(model_args, data_args, training_args):
 
     # model
     model_type = (
-        AutoCrfModelforKpExtraction if model_args.use_crf else AutoModelForKpExtraction
+        AutoCRFModelforKPExtraction if model_args.use_crf else AutoModelForKPExtraction
     )
     model = model_type.from_pretrained(
         model_args.model_name_or_path,

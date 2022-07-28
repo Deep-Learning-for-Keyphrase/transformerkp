@@ -20,6 +20,7 @@ class KETrainingArguments(TrainingArguments):
     score_aggregation_method: bool = field(
         default="avg",
         metadata={
-            "help": "which method among avg, max and first to use while calculating confidence score of a keyphrase. None indicates not to calculate this s ore"
+            "help": "which method among avg, max and first to use while calculating confidence score of a keyphrase. "
+                    "None indicates not to calculate this score"
         },
     )
