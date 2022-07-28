@@ -24,16 +24,25 @@ class KGDataset(KPDataset):
         self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = None
         self._validation: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = None
         self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = None
+        self._cache_dir = self.data_args.cache_dir
+        self._doc_stride = self.data_args.doc_stride
+        self._n_best_size = self.data_args.n_best_size
+        self._splits: Union[List[str], None] = list(set(get_dataset_split_names(
+            self.data_args.dataset_name, "generation")
+        ).intersection(set(self.data_args.splits))) if self.data_args.dataset_name else self.data_args.splits
         self._text_column_name: str = self.data_args.text_column_name
         self._keyphrases_column_name: str = self.data_args.keyphrases_column_name
         self._max_keyphrases_length: int = self.data_args.max_keyphrases_length
         self._splits_to_load: Union[List[str], None] = self.data_args.splits
-        self._padding: Union[str, bool] = "max_length" if self.data_args.pad_to_max_length else False
+        self._padding: Union[str, bool] = "max_length" if self.data_args.padding else False
         self._datasets: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = None
         self._truncation: bool = True
         self.__preprocess_function: Union[Callable, None] = self.data_args.preprocess_func
         self._kp_sep_token: str = self.data_args.keyphrase_sep_token
-        self.__load_kg_datasets()
+        self._ignore_pad_token_for_loss: bool = self.data_args.ignore_pad_token_for_loss
+        self._present_keyphrase_only: bool = self.data_args.present_keyphrase_only
+        self._cat_sequence = self.data_args.cat_sequence
+        # self.__load_kg_datasets()
 
     @property
     def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
@@ -67,16 +76,108 @@ class KGDataset(KPDataset):
     def truncation(self) -> bool:
         return self._truncation
 
-    def __load_kg_datasets(self) -> None:
+    @property
+    def splits(self) -> Union[List[str], None]:
+        return self._splits
+
+    @property
+    def cache_dir(self) -> str:
+        """Gets the cache dir"""
+        return self._cache_dir
+
+    @property
+    def doc_stride(self) -> int:
+        """Gets the doc_stride param"""
+        return self._doc_stride
+
+    @property
+    def n_best_size(self) -> int:
+        """Gets the n_best_size"""
+        return self._n_best_size
+
+    @property
+    def num_beams(self) -> int:
+        """Gets the num_beams param"""
+        return self._num_beams
+
+    @property
+    def ignore_pad_token_for_loss(self) -> bool:
+        """Gets the param ignore_pad_token_for_loss: bool"""
+        return self._ignore_pad_token_for_loss
+
+    @property
+    def present_keyphrase_only(self) -> bool:
+        """Gets the param present_keyphrase_only"""
+        return self._present_keyphrase_only
+
+    @property
+    def cat_sequence(self) -> bool:
+        """Gets the cat sequence param"""
+        return self._cat_sequence
+
+    @splits.setter
+    def splits(self, splits: Union[List[str], None]):
+        """Sets the data splits to be loaded"""
+        self._splits = list(set(get_dataset_split_names(
+            self.data_args.dataset_name, "generation")).intersection(set(splits)))
+
+    @cache_dir.setter
+    def cache_dir(self, cache_dir: str):
+        """Sets the cache dir"""
+        self._cache_dir = cache_dir
+
+    @keyphrases_column_name.setter
+    def keyphrases_column_name(self, keyphrases_column_name: str):
+        self._keyphrases_column_name = keyphrases_column_name
+
+    @max_keyphrases_length.setter
+    def max_keyphrases_length(self, max_keyphrases_length: int):
+        self._max_keyphrases_length = max_keyphrases_length
+
+    @padding.setter
+    def padding(self, padding: Union[str, bool]):
+        self._padding = padding
+
+    @kp_sep_token.setter
+    def kp_sep_token(self, kp_sep_token: str):
+        self._kp_sep_token = kp_sep_token
+
+    @truncation.setter
+    def truncation(self, truncation: bool):
+        self._truncation = truncation
+
+    @doc_stride.setter
+    def doc_stride(self, doc_stride: int):
+        self._doc_stride = doc_stride
+
+    @n_best_size.setter
+    def n_best_size(self, n_best_size: int):
+        self._n_best_size = n_best_size
+
+    @num_beams.setter
+    def num_beams(self, num_beams: int):
+        self._num_beams = num_beams
+
+    @ignore_pad_token_for_loss.setter
+    def ignore_pad_token_for_loss(self, ignore_pad_token_for_loss: bool):
+        self._ignore_pad_token_for_loss = ignore_pad_token_for_loss
+
+    @present_keyphrase_only.setter
+    def present_keyphrase_only(self, present_keyphrase_only: bool):
+        self._present_keyphrase_only = present_keyphrase_only
+
+    @cat_sequence.setter
+    def cat_sequence(self, cat_sequence: bool):
+        self._cat_sequence = cat_sequence
+
+    def load(self) -> None:
         if self.data_args.dataset_name is not None:
-            dataset_splits = get_dataset_split_names(self.data_args.dataset_name, "extraction")
-            self._splits_to_load = list(set(dataset_splits).intersection(set(self.data_args.splits)))
-            logger.info(f"Only loading the following splits {self._splits_to_load}")
+            logger.info(f"Only loading the following splits {self._splits}")
             # Downloading and loading a dataset from the hub.
             self._datasets = load_dataset(
                 self.data_args.dataset_name,
                 self.data_args.dataset_config_name,
-                split=self._splits_to_load,
+                split=self._splits,
                 cache_dir=self.data_args.cache_dir,
             )
         else:
@@ -95,12 +196,12 @@ class KGDataset(KPDataset):
                 extension = pathlib.Path(self.data_args.test_file).suffix.replace(".", "")
                 logger.info(f"Loaded test data from {self.data_args.test_file}")
 
-            logger.info(f"Only loading the following splits {self._splits_to_load}")
+            logger.info(f"Only loading the following splits {self._splits}")
             self._datasets = load_dataset(
                 extension,
                 data_files=data_files,
                 cache_dir=self.data_args.cache_dir,
-                split=self._splits_to_load,
+                split=self._splits,
             )
 
         if self.__preprocess_function:
@@ -149,955 +250,220 @@ class KGDataset(KPDataset):
         if "test" in self._datasets:
             self._test = self._datasets["test"]
 
+        if self._present_keyphrase_only:
+            if self._train:
+                self._train = self._train.remove_columns(["extractive_keyphrases"])
+            if self._validation:
+                self._validation = self._validation.remove_columns(["extractive_keyphrases"])
+            if self._test:
+                self._test = self._test.remove_columns(["extractive_keyphrases"])
+
+
     def __create_dataset_dict_from_splits(self, data_splits: List[Dataset]) -> DatasetDict:
         data_dict = defaultdict(Dataset)
-        for split_name, data_split in zip(self._splits_to_load, data_splits):
+        for split_name, data_split in zip(self._splits, data_splits):
             data_dict[split_name] = data_split
         return DatasetDict(data_dict)
 
 
-class InspecKGDataset(KPDataset):
+class InspecKGDataset(KGDataset):
     """Class for loading the Inspec dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["train", "validation", "test"],
-            max_seq_length: int = 512,
-            label_all_tokens: bool = True,
-            cache_dir: Union[str, None] = None,
+            data_args: kg_data_args.InspecKGDataArguments = kg_data_args.InspecKGDataArguments()
     ):
         """Init method for InspecKGDataset
-
-        Args:
-            splits (list): Names of the data splits to be loaded. For example, sometimes, one might only need
-                to load the test split of the data.
-            max_seq_length (int): The maximum total input sequence length after tokenization. Sequences longer than
-                this will be truncated, sequences shorter will be padded.
-            label_all_tokens (bool): Whether to put the label for one word on all sub-words generated by that word or
-                just on the one, in which case the other tokens will have a padding index (default:True).
-            cache_dir (str): Provide the name of a path for the cache dir. It is used to store the results
-                of the computation (default: None).
         """
-        super().__init__()
-        self._data_args: kg_data_args.InspecKGDataArguments = kg_data_args.InspecKGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+        super().__init__(data_args=data_args)
 
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
-
-class NUSKGDataset(KPDataset):
+class NUSKGDataset(KGDataset):
     """Class for loading the NUS dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["test"],
-            max_seq_length: int = 512,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.NUSKGDataArguments() = kg_data_args.NUSKGDataArguments()
     ):
         """Init method for NUSKGDataset
-
-        Args:
-            splits (list): Names of the data splits to be loaded. For example, sometimes, one might only need
-                to load the test split of the data.
-            max_seq_length (int): The maximum total input sequence length after tokenization. Sequences longer than
-                this will be truncated, sequences shorter will be padded.
-            label_all_tokens (bool): Whether to put the label for one word on all sub-words generated by that word or
-                just on the one, in which case the other tokens will have a padding index (default:True).
-            cache_dir (str): Provide the name of a path for the cache dir. It is used to store the results
-                of the computation (default: None).
         """
-        super().__init__()
-        self._data_args: kg_data_args.NUSKGDataArguments = kg_data_args.NUSKGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+        super().__init__(data_args=data_args)
 
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
-
-class KDDKGDataset(KPDataset):
+class KDDKGDataset(KGDataset):
     """Class for loading the KDD dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["test"],
-            max_seq_length: int = 512,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.KDDKGDataArguments = kg_data_args.KDDKGDataArguments()
     ):
         """Init method for KDDKGDataset
-
-        Args:
-            splits (list): Names of the data splits to be loaded. For example, sometimes, one might only need
-                to load the test split of the data.
-            max_seq_length (int): The maximum total input sequence length after tokenization. Sequences longer than
-                this will be truncated, sequences shorter will be padded.
-            label_all_tokens (bool): Whether to put the label for one word on all sub-words generated by that word or
-                just on the one, in which case the other tokens will have a padding index (default:True).
-            cache_dir (str): Provide the name of a path for the cache dir. It is used to store the results
-                of the computation (default: None).
         """
-        super().__init__()
-        self._data_args: kg_data_args.KDDKGDataArguments = kg_data_args.KDDKGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+        super().__init__(data_args=data_args)
 
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
-
-class KrapivinKGDataset(KPDataset):
+class KrapivinKGDataset(KGDataset):
     """Class for loading the Krapivin dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["test"],
-            max_seq_length: int = 512,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.KrapivinKGDataArguments = kg_data_args.KrapivinKGDataArguments()
     ):
         """Init method for KrapivinKGDataset
-
-        Args:
-            splits (list): Names of the data splits to be loaded. For example, sometimes, one might only need
-                to load the test split of the data.
-            max_seq_length (int): The maximum total input sequence length after tokenization. Sequences longer than
-                this will be truncated, sequences shorter will be padded.
-            label_all_tokens (bool): Whether to put the label for one word on all sub-words generated by that word or
-                just on the one, in which case the other tokens will have a padding index (default:True).
-            cache_dir (str): Provide the name of a path for the cache dir. It is used to store the results
-                of the computation (default: None).
         """
-        super().__init__()
-        self._data_args: kg_data_args.KrapivinKGDataArguments = kg_data_args.KrapivinKGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+        super().__init__(data_args=data_args)
 
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
-
-
-class KP20KKGDataset(KPDataset):
+class KP20KKGDataset(KGDataset):
     """Class for loading the KP20K dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["train", "validation", "test"],
-            max_seq_length: int = 512,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.KP20KKGDataArguments = kg_data_args.KP20KKGDataArguments()
     ):
         """Init method for KP20KKGDataset
-
-        Args:
-            splits (list): Names of the data splits to be loaded. For example, sometimes, one might only need
-                to load the test split of the data.
-            max_seq_length (int): The maximum total input sequence length after tokenization. Sequences longer than
-                this will be truncated, sequences shorter will be padded.
-            label_all_tokens (bool): Whether to put the label for one word on all sub-words generated by that word or
-                just on the one, in which case the other tokens will have a padding index (default:True).
-            cache_dir (str): Provide the name of a path for the cache dir. It is used to store the results
-                of the computation (default: None).
         """
-        super().__init__()
-        self._data_args: kg_data_args.KP20KKGDataArguments = kg_data_args.KP20KKGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+        super().__init__(data_args=data_args)
 
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
-
-class WWWKGDataset(KPDataset):
+class WWWKGDataset(KGDataset):
     """Class for loading the WWW dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["test"],
-            max_seq_length: int = 512,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.WWWKGDataArguments = kg_data_args.WWWKGDataArguments()
     ):
         """Init method for WWWKGDataset
-
-        Args:
-            splits (list): Names of the data splits to be loaded. For example, sometimes, one might only need
-                to load the test split of the data.
-            max_seq_length (int): The maximum total input sequence length after tokenization. Sequences longer than
-                this will be truncated, sequences shorter will be padded.
-            label_all_tokens (bool): Whether to put the label for one word on all sub-words generated by that word or
-                just on the one, in which case the other tokens will have a padding index (default:True).
-            cache_dir (str): Provide the name of a path for the cache dir. It is used to store the results
-                of the computation (default: None).
         """
-        super().__init__()
-        self._data_args: kg_data_args.WWWKGDataArguments = kg_data_args.WWWKGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
-
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
+        super().__init__(data_args=data_args)
 
 class LDKP3KSmallKGDataset(KGDataset):
     """Class for loading the LDKP3K small dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["test"],
-            max_seq_length: int = 4096,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.LDKP3KSmallKGDataArguments = kg_data_args.LDKP3KSmallKGDataArguments()
     ):
-        super().__init__()
-        self._data_args: kg_data_args.LDKP3KSmallKGDataArguments = kg_data_args.LDKP3KSmallKGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
-
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
+        super().__init__(data_args=data_args)
+        print(data_args.dataset_config_name)
 
 class LDKP3KMediumKGDataset(KGDataset):
     """Class for loading the LDKP3K medium dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["test"],
-            max_seq_length: int = 4096,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.LDKP3KMediumKGDataArguments = kg_data_args.LDKP3KMediumKGDataArguments()
     ):
-        super().__init__()
-        self._data_args: kg_data_args.LDKP3KMediumKGDataArguments = kg_data_args.LDKP3KMediumKGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
-
-
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
+        super().__init__(data_args=data_args)
 
 class LDKP3KLargeKGDataset(KGDataset):
     """Class for loading the LDKP3K large dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["test"],
-            max_seq_length: int = 4096,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.LDKP3KLargeKGDataArguments = kg_data_args.LDKP3KLargeKGDataArguments()
     ):
-        super().__init__()
-        self._data_args: kg_data_args.LDKP3KLargeKGDataArguments = kg_data_args.LDKP3KLargeKGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
-
-
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
+        super().__init__(data_args=data_args)
 
 class LDKP10KSmallKGDataset(KGDataset):
     """Class for loading the LDKP10K small dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["test"],
-            max_seq_length: int = 4096,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.LDKP10KSmallKGDataArguments = kg_data_args.LDKP10KSmallKGDataArguments()
     ):
-        super().__init__()
-        self._data_args: kg_data_args.LDKP10KSmallKGDataArguments = kg_data_args.LDKP10KSmallKGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
-
-
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
+        super().__init__(data_args=data_args)
 
 class LDKP10KMediumKGDataset(KGDataset):
     """Class for loading the LDKP10K medium dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["test"],
-            max_seq_length: int = 4096,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.LDKP10KMediumKGDataArguments = kg_data_args.LDKP10KMediumKGDataArguments()
     ):
-        super().__init__()
-        self._data_args: kg_data_args.LDKP10KMediumKGDataArguments = kg_data_args.LDKP10KMediumKGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
-
-
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
+        super().__init__(data_args=data_args)
 
 class LDKP10KLargeKGDataset(KGDataset):
     """Class for loading the LDKP10K large dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["test"],
-            max_seq_length: int = 4096,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.LDKP10KLargeKGDataArguments = kg_data_args.LDKP10KLargeKGDataArguments()
     ):
-        super().__init__()
-        self._data_args: kg_data_args.LDKP10KLargeKGDataArguments = kg_data_args.LDKP10KLargeKGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+        super().__init__(data_args=data_args)
 
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
-
-class KPTimesKGDataset(KPDataset):
+class KPTimesKGDataset(KGDataset):
     """Class for loading the KPTimes dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["train", "validation", "test"],
-            max_seq_length: int = 512,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.KPTimesKGDataArguments = kg_data_args.KPTimesKGDataArguments()
     ):
         """Init method for KPTimesKGDataset
-
-        Args:
-            splits (list): Names of the data splits to be loaded. For example, sometimes, one might only need
-                to load the test split of the data.
-            max_seq_length (int): The maximum total input sequence length after tokenization. Sequences longer than
-                this will be truncated, sequences shorter will be padded.
-            label_all_tokens (bool): Whether to put the label for one word on all sub-words generated by that word or
-                just on the one, in which case the other tokens will have a padding index (default:True).
-            cache_dir (str): Provide the name of a path for the cache dir. It is used to store the results
-                of the computation (default: None).
         """
-        super().__init__()
-        self._data_args: kg_data_args.KPTimesKGDataArguments = kg_data_args.KPTimesKGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+        super().__init__(data_args=data_args)
 
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
-
-
-class OpenKPKGDataset(KPDataset):
+class OpenKPKGDataset(KGDataset):
     """Class for loading the OpenKP dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["train", "validation", "test"],
-            max_seq_length: int = 512,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.OpenKPKGDataArguments = kg_data_args.OpenKPKGDataArguments()
     ):
         """Init method for OpenKPKGDataset
-
-        Args:
-            splits (list): Names of the data splits to be loaded. For example, sometimes, one might only need
-                to load the test split of the data.
-            max_seq_length (int): The maximum total input sequence length after tokenization. Sequences longer than
-                this will be truncated, sequences shorter will be padded.
-            label_all_tokens (bool): Whether to put the label for one word on all sub-words generated by that word or
-                just on the one, in which case the other tokens will have a padding index (default:True).
-            cache_dir (str): Provide the name of a path for the cache dir. It is used to store the results
-                of the computation (default: None).
         """
-        super().__init__()
-        self._data_args: kg_data_args.OpenKPKGDataArguments = kg_data_args.OpenKPKGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+        super().__init__(data_args=data_args)
 
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
-
-
-class SemEval2010KGDataset(KPDataset):
+class SemEval2010KGDataset(KGDataset):
     """Class for loading the SemEval 2010 dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["train", "test"],
-            max_seq_length: int = 512,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.SemEval2010KGDataArguments = kg_data_args.SemEval2010KGDataArguments()
     ):
         """Init method for SemEval2010KGDataset
-
-        Args:
-            splits (list): Names of the data splits to be loaded. For example, sometimes, one might only need
-                to load the test split of the data.
-            max_seq_length (int): The maximum total input sequence length after tokenization. Sequences longer than
-                this will be truncated, sequences shorter will be padded.
-            label_all_tokens (bool): Whether to put the label for one word on all sub-words generated by that word or
-                just on the one, in which case the other tokens will have a padding index (default:True).
-            cache_dir (str): Provide the name of a path for the cache dir. It is used to store the results
-                of the computation (default: None).
         """
-        super().__init__()
-        self._data_args: kg_data_args.SemEval2010KGDataArguments = kg_data_args.SemEval2010KGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+        super().__init__(data_args=data_args)
 
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
-
-
-class SemEval2017KGDataset(KPDataset):
+class SemEval2017KGDataset(KGDataset):
     """Class for loading the SemEval 2017 dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["train", "validation", "test"],
-            max_seq_length: int = 512,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.SemEval2017KGDataArguments = kg_data_args.SemEval2017KGDataArguments()
     ):
         """Init method for SemEval2017KGDataset
-
-        Args:
-            splits (list): Names of the data splits to be loaded. For example, sometimes, one might only need
-                to load the test split of the data.
-            max_seq_length (int): The maximum total input sequence length after tokenization. Sequences longer than
-                this will be truncated, sequences shorter will be padded.
-            label_all_tokens (bool): Whether to put the label for one word on all sub-words generated by that word or
-                just on the one, in which case the other tokens will have a padding index (default:True).
-            cache_dir (str): Provide the name of a path for the cache dir. It is used to store the results
-                of the computation (default: None).
         """
-        super().__init__()
-        self._data_args: kg_data_args.SemEval2017DataArguments = kg_data_args.SemEval2017KGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+        super().__init__(data_args=data_args)
 
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
-
-class KPCrowdKGDataset(KPDataset):
+class KPCrowdKGDataset(KGDataset):
     """Class for loading the KPCrowd dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["train", "test"],
-            max_seq_length: int = 512,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.KPCrowdKGDataArguments = kg_data_args.KPCrowdKGDataArguments()
     ):
         """Init method for KPCrowdKGDataset
-
-        Args:
-            splits (list): Names of the data splits to be loaded. For example, sometimes, one might only need
-                to load the test split of the data.
-            max_seq_length (int): The maximum total input sequence length after tokenization. Sequences longer than
-                this will be truncated, sequences shorter will be padded.
-            label_all_tokens (bool): Whether to put the label for one word on all sub-words generated by that word or
-                just on the one, in which case the other tokens will have a padding index (default:True).
-            cache_dir (str): Provide the name of a path for the cache dir. It is used to store the results
-                of the computation (default: None).
         """
-        super().__init__()
-        self._data_args: kg_data_args.KPCrowdKGDataArguments = kg_data_args.KPCrowdKGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+        super().__init__(data_args=data_args)
 
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
-
-
-class DUC2001KGDataset(KPDataset):
+class DUC2001KGDataset(KGDataset):
     """Class for loading the DUC 2001 dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["test"],
-            max_seq_length: int = 512,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.KPCrowdKGDataArguments = kg_data_args.DUC2001KGDataArguments()
     ):
         """Init method for DUC2001KGDataset
 
-        Args:
-            splits (list): Names of the data splits to be loaded. For example, sometimes, one might only need
-                to load the test split of the data.
-            max_seq_length (int): The maximum total input sequence length after tokenization. Sequences longer than
-                this will be truncated, sequences shorter will be padded.
-            label_all_tokens (bool): Whether to put the label for one word on all sub-words generated by that word or
-                just on the one, in which case the other tokens will have a padding index (default:True).
-            cache_dir (str): Provide the name of a path for the cache dir. It is used to store the results
-                of the computation (default: None).
         """
-        super().__init__()
-        self._data_args: kg_data_args.KPCrowdKGDataArguments = kg_data_args.DUC2001KGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+        super().__init__(data_args=data_args)
 
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
-
-
-class CSTRKGDataset(KPDataset):
+class CSTRKGDataset(KGDataset):
     """Class for loading the CSTR dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["train", "test"],
-            max_seq_length: int = 512,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.CSTRKGDataArguments = kg_data_args.CSTRKGDataArguments()
     ):
         """Init method for CSTRKGDataset
 
-        Args:
-            splits (list): Names of the data splits to be loaded. For example, sometimes, one might only need
-                to load the test split of the data.
-            max_seq_length (int): The maximum total input sequence length after tokenization. Sequences longer than
-                this will be truncated, sequences shorter will be padded.
-            label_all_tokens (bool): Whether to put the label for one word on all sub-words generated by that word or
-                just on the one, in which case the other tokens will have a padding index (default:True).
-            cache_dir (str): Provide the name of a path for the cache dir. It is used to store the results
-                of the computation (default: None).
         """
-        super().__init__()
-        self._data_args: kg_data_args.CSTRKGDataArguments = kg_data_args.CSTRKGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+        super().__init__(data_args=data_args)
 
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
-
-class PubMedKGDataset(KPDataset):
+class PubMedKGDataset(KGDataset):
     """Class for loading the Pub Med dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["test"],
-            max_seq_length: int = 512,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.PubMedKGDataArguments = kg_data_args.PubMedKGDataArguments()
     ):
         """Init method for PubMedKGDataset
 
-        Args:
-            splits (list): Names of the data splits to be loaded. For example, sometimes, one might only need
-                to load the test split of the data.
-            max_seq_length (int): The maximum total input sequence length after tokenization. Sequences longer than
-                this will be truncated, sequences shorter will be padded.
-            label_all_tokens (bool): Whether to put the label for one word on all sub-words generated by that word or
-                just on the one, in which case the other tokens will have a padding index (default:True).
-            cache_dir (str): Provide the name of a path for the cache dir. It is used to store the results
-                of the computation (default: None).
         """
-        super().__init__()
-        self._data_args: kg_data_args.PubMedKGDataArguments = kg_data_args.PubMedKGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
+        super().__init__(data_args=data_args)
 
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
-
-class CiteulikeKGDataset(KPDataset):
+class CiteulikeKGDataset(KGDataset):
     """Class for loading the Citeulike dataset from Huggingface Hub"""
     def __init__(
             self,
-            splits: list = ["test"],
-            max_seq_length: int = 512,
-            label_all_tokens: bool = True,
-            cache_dir=None,
+            data_args: kg_data_args.CiteulikeKGDataArguments = kg_data_args.CiteulikeKGDataArguments()
     ):
         """Init method for CiteulikeKGDataset
-
-        Args:
-            splits (list): Names of the data splits to be loaded. For example, sometimes, one might only need
-                to load the test split of the data.
-            max_seq_length (int): The maximum total input sequence length after tokenization. Sequences longer than
-                this will be truncated, sequences shorter will be padded.
-            label_all_tokens (bool): Whether to put the label for one word on all sub-words generated by that word or
-                just on the one, in which case the other tokens will have a padding index (default:True).
-            cache_dir (str): Provide the name of a path for the cache dir. It is used to store the results
-                of the computation (default: None).
         """
-        super().__init__()
-        self._data_args: kg_data_args.CiteulikeKGDataArguments = kg_data_args.CiteulikeKGDataArguments()
-        self._data_args.splits = splits
-        self._data_args.max_seq_length = max_seq_length
-        self._data_args.label_all_tokens = label_all_tokens
-        self._data_args.cache_dir = cache_dir
-        self._dataset: KGDataset = KGDataset(self._data_args)
-        self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.train
-        self._validation: Union[
-            DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.validation
-        self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = self._dataset.test
-
-    @property
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the train split"""
-        return self._train
-
-    @property
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the validation split"""
-        return self._validation
-
-    @property
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
-        """Gets the test split"""
-        return self._test
+        super().__init__(data_args=data_args)

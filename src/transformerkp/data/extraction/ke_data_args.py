@@ -1,6 +1,6 @@
 import pathlib
 from dataclasses import dataclass, field
-from typing import Optional, Callable, List
+from typing import Optional, Callable, List, Union
 
 from transformerkp.data.base import KPDataArguments
 
@@ -51,8 +51,8 @@ class KEDataArguments(KPDataArguments):
     #         "help": "(Optional) Percentage of test data to be used during test evaluation."
     #     },
     # )
-    pad_to_max_length: bool = field(
-        default=True,
+    padding: Union[str, bool] = field(
+        default="max_length",
         metadata={
             "help": "Whether to pad all samples to model maximum sentence length. "
             "If False, will pad the samples dynamically when batching to the maximum length in the batch. More "
@@ -256,7 +256,7 @@ class CiteulikeKEDataArguments(HFKEDataArguments):
     CiteULike corpus to be downloaded from - https://huggingface.co/datasets/midas/citeulike
     """
     dataset_name: Optional[str] = field(
-        default="midas/citeulike",
+        default="midas/citeulike180",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
             "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."

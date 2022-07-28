@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, Callable, List
+from typing import Optional, Callable, List, Union
 
 from transformerkp.data.base import KPDataArguments
 
@@ -45,8 +45,8 @@ class KGDataArguments(KPDataArguments):
             "during ``evaluate`` and ``predict``."
         },
     )
-    pad_to_max_length: bool = field(
-        default=False,
+    padding: Union[str, bool] = field(
+        default="max_length",
         metadata={
             "help": "Whether to pad all samples to `max_seq_length`. "
             "If False, will pad the samples dynamically when batching to the maximum length in the batch (which can "
@@ -87,7 +87,7 @@ class KGDataArguments(KPDataArguments):
         },
     )
     num_beams: Optional[int] = field(
-        default=None,
+        default=5,
         metadata={
             "help": "Number of beams to use for evaluation. This argument will be passed to ``model.generate``, "
             "which is used during ``evaluate`` and ``predict``."
