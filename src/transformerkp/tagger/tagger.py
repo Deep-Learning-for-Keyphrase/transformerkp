@@ -13,7 +13,7 @@ from transformers.trainer_utils import get_last_checkpoint, is_main_process
 
 from ..data.preprocessing import tokenize_and_align_labels
 from .data_collators import DataCollatorForKpExtraction
-from .models import AutoCrfModelforKpExtraction, AutoModelForKpExtraction
+from .models import AutoCRFModelforKPExtraction, AutoModelForKPExtraction
 from .train_eval_kp_tagger import train_eval_extraction_model
 from .trainer import CrfKpExtractionTrainer, KpExtractionTrainer
 from .utils import KEDataArguments, KEModelArguments, KETrainingArguments
@@ -57,7 +57,7 @@ class KeyphraseTagger:
         self.trainer = KpExtractionTrainer if trainer is None else trainer
         self.data_collator = data_collator
         self.model_type = (
-            AutoCrfModelforKpExtraction if self.use_crf else AutoModelForKpExtraction
+            AutoCRFModelforKPExtraction if self.use_crf else AutoModelForKPExtraction
         )
 
         self.model = self.model_type.from_pretrained(
