@@ -15,13 +15,9 @@ from .models import AutoCrfModelforKpExtraction, AutoModelForKpExtraction
 from .train_eval_kp_tagger import train_eval_extraction_model
 from .trainer import CrfKpExtractionTrainer, KpExtractionTrainer
 from .utils import KEDataArguments, KEModelArguments, KETrainingArguments
+from .constants import ID_TO_LABELS, LABELS_TO_ID, TAG_ENCODING, NUM_LABELS
 
 logger = logging.getLogger(__name__)
-
-ID_TO_LABELS = {0: "B", 1: "I", 2: "O"}
-LABELS_TO_ID = {"B": 0, "I": 1, "O": 2}
-NUM_LABELS = 3
-TAG_ENCODING = "BIO"
 
 
 class KeyphraseTagger:
@@ -293,6 +289,7 @@ class KeyphraseTagger:
         self.predicted_labels = predicted_labels
         self.label_score = label_score
         self.score_method = score_method
+
         datasets = datasets.map(
             self.get_extracted_keyphrases_,
             num_proc=self.data_args.preprocessing_num_workers,
