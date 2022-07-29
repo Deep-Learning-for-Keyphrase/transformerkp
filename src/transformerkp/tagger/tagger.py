@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-from tkinter.tix import Tree
 from typing import List, Union
 
 import numpy as np
@@ -9,12 +8,12 @@ import transformers
 from transformers import AutoConfig, AutoTokenizer, HfArgumentParser, set_seed
 from transformers.trainer_utils import get_last_checkpoint, is_main_process
 
-from ..datasets.extraction import KEDatasets
 from .data_collators import DataCollatorForKpExtraction
 from .models import AutoCrfModelforKpExtraction, AutoModelForKpExtraction
 from .train_eval_kp_tagger import train_eval_extraction_model
 from .trainer import CrfKpExtractionTrainer, KpExtractionTrainer
 from .utils import KEDataArguments, KEModelArguments, KETrainingArguments
+from ..data.preprocessing import tokenize_and_align_labels
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +54,19 @@ class KeyphraseTagger:
         self.trainer = (
             CrfKpExtractionTrainer if self.use_crf else KpExtractionTrainer
         )(model=self.model, tokenizer=self.tokenizer, data_collator=self.data_collator)
+
+    def preprocess_datasets(self, datasets):
+        return tokenize_and_align_labels(
+            datasets=datasets,
+            text_column_name= "", # TODO(AD)
+            label_column_name="", # TODO(AD)
+            tokenizer=self.tokenizer,
+            label_to_id= {},# TODO(AD)
+            label_all_tokens=True, # TODO(AD) read from args
+            max_seq_len= 512 # TODO(AD) read from args and set from model
+            num_workers= 4, # TODO(AD) read from args
+            overwrite_cache= True # TODO(AD) from args
+        )
 
     def train(
         self,
@@ -122,6 +134,10 @@ class KeyphraseTagger:
             self.tokenizer, pad_to_multiple_of=8 if training_args.fp16 else None
         )
 
+        logger.info("preprocessing training datasets")
+        training_datasets = self.preprocess_datasets(training_datasets)
+        if evaluation_datasets:
+            logger.info("")
         trainer = KpExtractionTrainer(
             model=self.model,
             args=training_args,
@@ -173,9 +189,259 @@ class KeyphraseTagger:
             compute_metrics=compute_metrics,
         )
 
-        metrics = trainer.evaluate()
+        prediction_logits, labels, metrics = trainer.predict(eval_datasets)
+        prediction_logits = np.exp(prediction_logits)
+        predicted_labels = np.argmax(prediction_logits, axis=2)
+        label_score = np.amax(prediction_logits, axis=2) / np.sum(
+            prediction_logits, axis=2
+        )
 
-        return metrics
+        output_test_results_file = os.path.join(
+            eval_args.output_dir, "test_results.txt"
+        )
+
+        output_test_predictions_file = os.path.join(
+            eval_args.output_dir, "test_predictions.csv"
+        )
+        output_test_predictions_BIO_file = os.path.join(
+            eval_args.output_dir, "test_predictions_BIO.txt"
+        )
+        if trainer.is_world_process_zero():
+            predicted_kps, confidence_scores = dataset.get_extracted_keyphrases(
+                predicted_labels=predicted_labels,
+                split_name="test",
+                label_score=label_score,
+                score_method=eval_args.score_aggregation_method,
+            )
+            original_kps = dataset.get_original_keyphrases(split_name="test")
+
+            kp_level_metrics = compute_kp_level_metrics(
+                predictions=predicted_kps, originals=original_kps, do_stem=True
+            )
+            df = pd.DataFrame.from_dict(
+                {
+                    "extracted_keyphrase": predicted_kps,
+                    "original_keyphrases": original_kps,
+                    "confidence_scores": confidence_scores,
+                }
+            )
+            df.to_csv(output_test_predictions_file, index=False)
+
+            results["extracted_keyprases"] = predicted_kps
+            with open(output_test_results_file, "w") as writer:
+                for key, value in sorted(metrics.items()):
+                    logger.info(f"  {key} = {value}")
+                    writer.write(f"{key} = {value}\n")
+
+                logger.info("Keyphrase level metrics\n")
+                writer.write("Keyphrase level metrics\n")
+
+                for key, value in sorted(kp_level_metrics.items()):
+                    logger.info(f"  {key} = {value}")
+                    writer.write(f"{key} = {value}\n")
+
+                total_keyphrases = sum([len(x) for x in confidence_scores])
+                total_confidence_scores = sum([sum(x) for x in confidence_scores])
+                avg_confidence_scores = total_confidence_scores / total_keyphrases
+                total_examples = len(predicted_kps)
+
+                avg_predicted_kps = total_keyphrases / total_examples
+
+                logger.info(
+                    "average confidence score: {}\n".format(avg_confidence_scores)
+                )
+                logger.info(
+                    "average number of keyphrases predicted: {}\n".format(
+                        avg_predicted_kps
+                    )
+                )
+                writer.write(
+                    "average confidence score: {}\n".format(avg_confidence_scores)
+                )
+                writer.write(
+                    "average number of keyphrases predicted: {}\n".format(
+                        avg_predicted_kps
+                    )
+                )
+
+    def get_extracted_keyphrases(
+        self, datasets, predicted_labels, label_score=None, score_method=None
+    ):
+        """
+        takes predicted labels as input and out put extracted keyphrase.
+        threee type of score_method is available 'avg', 'max' and first.
+        In 'avg' we take an airthimatic avergae of score of all the tags, in 'max' method maximum score among all the tags and in 'first' score of first tag is used to calculate the confidence score of whole keyphrase
+        """
+        assert datasets.num_rows == len(
+            predicted_labels
+        ), "number of rows in original dataset and predicted labels are not same"
+        if score_method:
+            assert len(predicted_labels) == len(
+                label_score
+            ), "len of predicted label is not same as of len of label score"
+
+        self.predicted_labels = predicted_labels
+        self.label_score = label_score
+        self.score_method = score_method
+        datasets = datasets.map(
+            self.get_extracted_keyphrases_,
+            num_proc=self.data_args.preprocessing_num_workers,
+            with_indices=True,
+        )
+        self.predicted_labels = None
+        self.label_score = None
+        self.score_method = None
+        if "confidence_score" in datasets.features:
+            return (
+                datasets["extracted_keyphrase"],
+                datasets["confidence_score"],
+            )
+        return datasets["extracted_keyphrase"], None
+
+    def get_extracted_keyphrases_(self, examples, idx):
+        ids = examples["input_ids"]
+        special_tok_mask = examples["special_tokens_mask"]
+        tokens = self.tokenizer.convert_ids_to_tokens(ids, skip_special_tokens=True)
+        tags = [
+            self.id_to_label[p]
+            for (p, m) in zip(self.predicted_labels[idx], special_tok_mask)
+            if m == 0
+        ]
+        scores = None
+        if self.score_method:
+            scores = [
+                scr
+                for (scr, m) in zip(self.label_score[idx], special_tok_mask)
+                if m == 0
+            ]
+        assert len(tokens) == len(
+            tags
+        ), "number of tags (={}) in prediction and tokens(={}) are not same for {}th".format(
+            len(tags), len(tokens), idx
+        )
+        token_ids = self.tokenizer.convert_tokens_to_ids(
+            tokens
+        )  # needed so that we can use batch decode directly and not mess up with convert tokens to string algorithm
+        extracted_kps, confidence_scores = self.extract_kp_from_tags(
+            token_ids,
+            tags,
+            tokenizer=self.tokenizer,
+            scores=scores,
+            score_method=self.score_method,
+        )
+        examples["extracted_keyphrase"] = extracted_kps
+        examples["confidence_score"] = []
+        if confidence_scores:
+            assert len(extracted_kps) == len(
+                confidence_scores
+            ), "len of scores and kps are not same"
+            examples["confidence_score"] = confidence_scores
+
+        return examples
+
+    def get_original_keyphrases(self, datasets):
+        assert "labels" in datasets.features, "truth labels are not present"
+        datasets = datasets.map(
+            self.get_original_keyphrases_,
+            num_proc=self.data_args.preprocessing_num_workers,
+            with_indices=True,
+        )
+        return datasets["original_keyphrase"]
+
+    def get_original_keyphrases_(self, examples, idx):
+        ids = examples["input_ids"]
+        special_tok_mask = examples["special_tokens_mask"]
+        labels = examples["labels"]
+        tokens = self.tokenizer.convert_ids_to_tokens(ids, skip_special_tokens=True)
+        tags = [
+            self.id_to_label[p] for (p, m) in zip(labels, special_tok_mask) if m == 0
+        ]
+        assert len(tokens) == len(
+            tags
+        ), "number of tags (={}) in prediction and tokens(={}) are not same for {}th".format(
+            len(tags), len(tokens), idx
+        )
+        token_ids = self.tokenizer.convert_tokens_to_ids(
+            tokens
+        )  # needed so that we can use batch decode directly and not mess up with convert tokens to string algorithm
+        original_kps, _ = self.extract_kp_from_tags(
+            token_ids, tags, tokenizer=self.tokenizer
+        )
+
+        examples["original_keyphrase"] = original_kps
+
+        return examples
+
+    @staticmethod
+    def extract_kp_from_tags(
+        token_ids, tags, tokenizer, scores=None, score_method=None
+    ):
+        if score_method:
+            assert len(tags) == len(
+                scores
+            ), "Score is not none and len of score is not equal to tags"
+        all_kps = []
+        all_kps_score = []
+        current_kp = []
+        current_score = []
+
+        for i, (id, tag) in enumerate(zip(token_ids, tags)):
+            if tag == "O" and len(current_kp) > 0:  # current kp ends
+                if score_method:
+                    confidence_score = KEDatasets.calculate_confidence_score(
+                        scores=current_score, score_method=score_method
+                    )
+                    current_score = []
+                    all_kps_score.append(confidence_score)
+
+                all_kps.append(current_kp)
+                current_kp = []
+            elif tag == "B":  # a new kp starts
+                if len(current_kp) > 0:
+                    if score_method:
+                        confidence_score = KEDatasets.calculate_confidence_score(
+                            scores=current_score, score_method=score_method
+                        )
+                        all_kps_score.append(confidence_score)
+                    all_kps.append(current_kp)
+                current_kp = []
+                current_score = []
+                current_kp.append(id)
+                if score_method:
+                    current_score.append(scores[i])
+            elif tag == "I":  # it is part of current kp so just append
+                current_kp.append(id)
+                if score_method:
+                    current_score.append(scores[i])
+        if len(current_kp) > 0:  # check for the last KP in sequence
+            all_kps.append(current_kp)
+            if score_method:
+                confidence_score = KEDatasets.calculate_confidence_score(
+                    scores=current_score, score_method=score_method
+                )
+                all_kps_score.append(confidence_score)
+        all_kps = tokenizer.batch_decode(
+            all_kps,
+            skip_special_tokens=True,
+            clean_up_tokenization_spaces=True,
+        )
+        final_kps, final_score = [], []
+        kps_set = {}
+        for i, kp in enumerate(all_kps):
+            if kp.lower() not in kps_set:
+                final_kps.append(kp.lower())
+                kps_set[kp.lower()] = -1
+                if score_method:
+                    kps_set[kp.lower()] = all_kps_score[i]
+                    final_score.append(all_kps_score[i])
+
+        if score_method:
+            assert len(final_kps) == len(
+                final_score
+            ), "len of kps and score calculated is not same"
+            return final_kps, final_score
+
+        return final_kps, None
 
     def predict(self, text, model_ckpt=None):
         pass
@@ -187,7 +453,7 @@ class KeyphraseTagger:
     def predict(self, texts: Union[List, str]):
         if isinstance(texts, str):
             texts = [texts]
-        self.datasets = KEDatasets.load_kp_datasets_from_text(texts)
+        datasets = KEDatasets.load_kp_datasets_from_text(texts)
         # tokenize current datsets
         def tokenize_(txt):
             return KEDatasets.tokenize_text(
@@ -197,9 +463,9 @@ class KeyphraseTagger:
                 max_seq_len=None,
             )
 
-        self.datasets = self.datasets.map(tokenize_)
+        datasets = datasets.map(tokenize_)
 
-        predictions, labels, metrics = self.trainer.predict(self.datasets)
+        predictions, labels, metrics = self.trainer.predict(datasets)
         predictions = np.argmax(predictions, axis=2)
 
         def extract_kp_from_tags_(examples, idx):
@@ -230,9 +496,9 @@ class KeyphraseTagger:
 
             return examples
 
-        self.datasets = self.datasets.map(extract_kp_from_tags_, with_indices=True)
+        datasets = datasets.map(extract_kp_from_tags_, with_indices=True)
 
-        return self.datasets["extracted_keyphrase"]
+        return datasets["extracted_keyphrase"]
 
     @staticmethod
     def train_and_eval(model_args, data_args, training_args):
