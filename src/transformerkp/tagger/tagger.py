@@ -4,18 +4,24 @@ import sys
 from typing import List, Union
 
 import numpy as np
+import pandas as pd
 import transformers
 from transformers import AutoConfig, AutoTokenizer, HfArgumentParser, set_seed
 from transformers.trainer_utils import get_last_checkpoint, is_main_process
 
+from ..data.preprocessing import tokenize_and_align_labels
 from .data_collators import DataCollatorForKpExtraction
 from .models import AutoCrfModelforKpExtraction, AutoModelForKpExtraction
 from .train_eval_kp_tagger import train_eval_extraction_model
 from .trainer import CrfKpExtractionTrainer, KpExtractionTrainer
 from .utils import KEDataArguments, KEModelArguments, KETrainingArguments
-from ..data.preprocessing import tokenize_and_align_labels
 
 logger = logging.getLogger(__name__)
+
+ID_TO_LABELS = {0: "B", 1: "I", 2: "O"}
+LABELS_TO_ID = {"B": 0, "I": 1, "O": 2}
+NUM_LABELS = 3
+TAG_ENCODING = "BIO"
 
 
 class KeyphraseTagger:
@@ -211,15 +217,15 @@ class KeyphraseTagger:
             eval_args.output_dir, "test_predictions_BIO.txt"
         )
         if trainer.is_world_process_zero():
-            predicted_kps, confidence_scores = dataset.get_extracted_keyphrases(
+            predicted_kps, confidence_scores = self.get_extracted_keyphrases(
+                datasets=eval_datasets,
                 predicted_labels=predicted_labels,
-                split_name="test",
                 label_score=label_score,
                 score_method=eval_args.score_aggregation_method,
             )
-            original_kps = dataset.get_original_keyphrases(split_name="test")
+            original_kps = self.get_original_keyphrases(datasets=eval_datasets)
 
-            kp_level_metrics = compute_kp_level_metrics(
+            kp_level_metrics = compute_kp_level_metrics(  # TODO(AD) add mmetrics
                 predictions=predicted_kps, originals=original_kps, do_stem=True
             )
             df = pd.DataFrame.from_dict(
@@ -227,11 +233,11 @@ class KeyphraseTagger:
                     "extracted_keyphrase": predicted_kps,
                     "original_keyphrases": original_kps,
                     "confidence_scores": confidence_scores,
+                    # TODO(AD) add functionality for offsets retrivial
                 }
             )
             df.to_csv(output_test_predictions_file, index=False)
 
-            results["extracted_keyprases"] = predicted_kps
             with open(output_test_results_file, "w") as writer:
                 for key, value in sorted(metrics.items()):
                     logger.info(f"  {key} = {value}")
@@ -446,13 +452,6 @@ class KeyphraseTagger:
             return final_kps, final_score
 
         return final_kps, None
-
-    def predict(self, text, model_ckpt=None):
-        pass
-
-    @classmethod
-    def load(cls, model_name_or_path):
-        return cls(model_name_or_path)
 
     def predict(self, texts: Union[List, str]):
         if isinstance(texts, str):
