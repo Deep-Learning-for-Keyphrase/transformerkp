@@ -181,6 +181,9 @@ class KeyphraseTagger:
             self.tokenizer, pad_to_multiple_of=8 if eval_args.fp16 else None
         )
 
+        logger.info("preprocessing evaluation datasets. . .")
+        eval_datasets = self.preprocess_datasets(eval_datasets)
+
         trainer = KpExtractionTrainer(
             model=self.model,
             args=eval_args,
