@@ -58,14 +58,14 @@ class KeyphraseTagger:
     def preprocess_datasets(self, datasets):
         return tokenize_and_align_labels(
             datasets=datasets,
-            text_column_name= "", # TODO(AD)
-            label_column_name="", # TODO(AD)
+            text_column_name="",  # TODO(AD)
+            label_column_name="",  # TODO(AD)
             tokenizer=self.tokenizer,
-            label_to_id= {},# TODO(AD)
-            label_all_tokens=True, # TODO(AD) read from args
-            max_seq_len= 512 # TODO(AD) read from args and set from model
-            num_workers= 4, # TODO(AD) read from args
-            overwrite_cache= True # TODO(AD) from args
+            label_to_id={},  # TODO(AD)
+            label_all_tokens=True,  # TODO(AD) read from args
+            max_seq_len=512,  # TODO(AD) read from args and set from model
+            num_workers=4,  # TODO(AD) read from args
+            overwrite_cache=True,  # TODO(AD) from args
         )
 
     def train(
@@ -134,10 +134,11 @@ class KeyphraseTagger:
             self.tokenizer, pad_to_multiple_of=8 if training_args.fp16 else None
         )
 
-        logger.info("preprocessing training datasets")
+        logger.info("preprocessing training datasets. . .")
         training_datasets = self.preprocess_datasets(training_datasets)
         if evaluation_datasets:
-            logger.info("")
+            logger.info("preprocessing evaluation datasets. . .")
+            evaluation_datasets = self.preprocess_datasets(evaluation_datasets)
         trainer = KpExtractionTrainer(
             model=self.model,
             args=training_args,
