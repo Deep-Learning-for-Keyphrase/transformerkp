@@ -457,62 +457,6 @@ class KeyphraseTagger:
 
         return final_kps, None
 
-    def predict(self, texts: Union[List, str]):
-        if isinstance(texts, str):
-            texts = [texts]
-        datasets = KEDatasets.load_kp_datasets_from_text(texts)
-        # tokenize current datsets
-        def tokenize_(txt):
-            return KEDatasets.tokenize_text(
-                txt["document"].split(),
-                tokenizer=self.tokenizer,
-                padding="max_length",
-                max_seq_len=None,
-            )
-
-        datasets = datasets.map(tokenize_)
-
-        predictions, labels, metrics = self.trainer.predict(datasets)
-        predictions = np.argmax(predictions, axis=2)
-
-        def extract_kp_from_tags_(examples, idx):
-            ids = examples["input_ids"]
-            special_tok_mask = examples["special_tokens_mask"]
-            tokens = self.tokenizer.convert_ids_to_tokens(ids, skip_special_tokens=True)
-            tags = [
-                self.id_to_label[str(p)]
-                for (p, m) in zip(predictions[idx], special_tok_mask)
-                if m == 0
-            ]  # TODO remove str(p)
-            assert len(tokens) == len(
-                tags
-            ), "number of tags (={}) in prediction and tokens(={}) are not same for {}th".format(
-                len(tags), len(tokens), idx
-            )
-            token_ids = self.tokenizer.convert_tokens_to_ids(
-                tokens
-            )  # needed so that we can use batch decode directly and not mess up with convert tokens to string algorithm
-            all_kps = KEDatasets.extract_kp_from_tags(token_ids, tags)
-
-            extracted_kps = self.tokenizer.batch_decode(
-                all_kps,
-                skip_special_tokens=True,
-                clean_up_tokenization_spaces=True,
-            )
-            examples["extracted_keyphrase"] = extracted_kps
-
-            return examples
-
-        datasets = datasets.map(extract_kp_from_tags_, with_indices=True)
-
-        return datasets["extracted_keyphrase"]
-
-    @staticmethod
-    def train_and_eval(model_args, data_args, training_args):
-        return train_eval_extraction_model(
-            model_args=model_args, data_args=data_args, training_args=training_args
-        )
-
     @staticmethod
     def train_and_eval_cli():
         parser = HfArgumentParser(
