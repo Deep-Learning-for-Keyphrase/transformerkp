@@ -1,6 +1,8 @@
+from cProfile import label
 import logging
 import os
 import sys
+from tkinter.tix import COLUMN
 from typing import List, Union
 
 import numpy as np
@@ -18,6 +20,15 @@ from .utils import KEDataArguments, KEModelArguments, KETrainingArguments
 from .constants import ID_TO_LABELS, LABELS_TO_ID, TAG_ENCODING, NUM_LABELS
 
 logger = logging.getLogger(__name__)
+
+# TODO(AD):
+# 1. remove id to label dependency
+# 2. NUm label as constant
+# 3. text columna dn laebls column name
+# 4. add single args and remove data args dependency
+# 5. metrics : tag level
+#             keyphrase level
+# 6. confidence score calculation
 
 
 class KeyphraseTagger:
@@ -341,36 +352,39 @@ class KeyphraseTagger:
 
     def get_original_keyphrases(self, datasets):
         assert "labels" in datasets.features, "truth labels are not present"
+
+        def get_original_keyphrases_(examples, idx):
+            ids = examples["input_ids"]
+            special_tok_mask = examples["special_tokens_mask"]
+            labels = examples["labels"]
+            tokens = self.tokenizer.convert_ids_to_tokens(ids, skip_special_tokens=True)
+            tags = [
+                self.id_to_label[p]
+                for (p, m) in zip(labels, special_tok_mask)
+                if m == 0
+            ]
+            assert len(tokens) == len(
+                tags
+            ), "number of tags (={}) in prediction and tokens(={}) are not same for {}th".format(
+                len(tags), len(tokens), idx
+            )
+            token_ids = self.tokenizer.convert_tokens_to_ids(
+                tokens
+            )  # needed so that we can use batch decode directly and not mess up with convert tokens to string algorithm
+            original_kps, _ = self.extract_kp_from_tags(
+                token_ids, tags, tokenizer=self.tokenizer
+            )
+
+            examples["original_keyphrase"] = original_kps
+
+            return examples
+
         datasets = datasets.map(
-            self.get_original_keyphrases_,
+            get_original_keyphrases_,
             num_proc=self.data_args.preprocessing_num_workers,
             with_indices=True,
         )
         return datasets["original_keyphrase"]
-
-    def get_original_keyphrases_(self, examples, idx):
-        ids = examples["input_ids"]
-        special_tok_mask = examples["special_tokens_mask"]
-        labels = examples["labels"]
-        tokens = self.tokenizer.convert_ids_to_tokens(ids, skip_special_tokens=True)
-        tags = [
-            self.id_to_label[p] for (p, m) in zip(labels, special_tok_mask) if m == 0
-        ]
-        assert len(tokens) == len(
-            tags
-        ), "number of tags (={}) in prediction and tokens(={}) are not same for {}th".format(
-            len(tags), len(tokens), idx
-        )
-        token_ids = self.tokenizer.convert_tokens_to_ids(
-            tokens
-        )  # needed so that we can use batch decode directly and not mess up with convert tokens to string algorithm
-        original_kps, _ = self.extract_kp_from_tags(
-            token_ids, tags, tokenizer=self.tokenizer
-        )
-
-        examples["original_keyphrase"] = original_kps
-
-        return examples
 
     @staticmethod
     def extract_kp_from_tags(
