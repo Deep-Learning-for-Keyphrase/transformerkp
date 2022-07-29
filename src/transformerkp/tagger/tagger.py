@@ -286,65 +286,58 @@ class KeyphraseTagger:
                 label_score
             ), "len of predicted label is not same as of len of label score"
 
-        self.predicted_labels = predicted_labels
-        self.label_score = label_score
-        self.score_method = score_method
+        def get_extracted_keyphrases_(examples, idx):
+            ids = examples["input_ids"]
+            special_tok_mask = examples["special_tokens_mask"]
+            tokens = self.tokenizer.convert_ids_to_tokens(ids, skip_special_tokens=True)
+            tags = [
+                self.id_to_label[p]
+                for (p, m) in zip(predicted_labels[idx], special_tok_mask)
+                if m == 0
+            ]
+            scores = None
+            if score_method:
+                scores = [
+                    scr
+                    for (scr, m) in zip(label_score[idx], special_tok_mask)
+                    if m == 0
+                ]
+            assert len(tokens) == len(
+                tags
+            ), "number of tags (={}) in prediction and tokens(={}) are not same for {}th".format(
+                len(tags), len(tokens), idx
+            )
+            token_ids = self.tokenizer.convert_tokens_to_ids(
+                tokens
+            )  # needed so that we can use batch decode directly and not mess up with convert tokens to string algorithm
+            extracted_kps, confidence_scores = self.extract_kp_from_tags(
+                token_ids,
+                tags,
+                tokenizer=self.tokenizer,
+                scores=scores,
+                score_method=score_method,
+            )
+            examples["extracted_keyphrase"] = extracted_kps
+            examples["confidence_score"] = []
+            if confidence_scores:
+                assert len(extracted_kps) == len(
+                    confidence_scores
+                ), "len of scores and kps are not same"
+                examples["confidence_score"] = confidence_scores
+
+            return examples
 
         datasets = datasets.map(
-            self.get_extracted_keyphrases_,
-            num_proc=self.data_args.preprocessing_num_workers,
+            get_extracted_keyphrases_,
+            num_proc=self.data_args.preprocessing_num_workers,  # TODO(AD) from args
             with_indices=True,
         )
-        self.predicted_labels = None
-        self.label_score = None
-        self.score_method = None
         if "confidence_score" in datasets.features:
             return (
                 datasets["extracted_keyphrase"],
                 datasets["confidence_score"],
             )
         return datasets["extracted_keyphrase"], None
-
-    def get_extracted_keyphrases_(self, examples, idx):
-        ids = examples["input_ids"]
-        special_tok_mask = examples["special_tokens_mask"]
-        tokens = self.tokenizer.convert_ids_to_tokens(ids, skip_special_tokens=True)
-        tags = [
-            self.id_to_label[p]
-            for (p, m) in zip(self.predicted_labels[idx], special_tok_mask)
-            if m == 0
-        ]
-        scores = None
-        if self.score_method:
-            scores = [
-                scr
-                for (scr, m) in zip(self.label_score[idx], special_tok_mask)
-                if m == 0
-            ]
-        assert len(tokens) == len(
-            tags
-        ), "number of tags (={}) in prediction and tokens(={}) are not same for {}th".format(
-            len(tags), len(tokens), idx
-        )
-        token_ids = self.tokenizer.convert_tokens_to_ids(
-            tokens
-        )  # needed so that we can use batch decode directly and not mess up with convert tokens to string algorithm
-        extracted_kps, confidence_scores = self.extract_kp_from_tags(
-            token_ids,
-            tags,
-            tokenizer=self.tokenizer,
-            scores=scores,
-            score_method=self.score_method,
-        )
-        examples["extracted_keyphrase"] = extracted_kps
-        examples["confidence_score"] = []
-        if confidence_scores:
-            assert len(extracted_kps) == len(
-                confidence_scores
-            ), "len of scores and kps are not same"
-            examples["confidence_score"] = confidence_scores
-
-        return examples
 
     def get_original_keyphrases(self, datasets):
         assert "labels" in datasets.features, "truth labels are not present"
