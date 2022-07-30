@@ -25,13 +25,13 @@ class AutoCrfModelForKPExtraction:
 
     @classmethod
     def from_config(cls, config, **kwargs):
-        if type(config) in CRF_MODEL_MAPPINGS.keys():
-            model_class = CRF_MODEL_MAPPINGS[type(config)]
+        if config.__class__.__name__ in CRF_MODEL_MAPPINGS.keys():
+            model_class = CRF_MODEL_MAPPINGS[config.__class__.__name__]
             return model_class._from_config(config, **kwargs)
 
         raise ValueError(
             f"Unrecognized configuration class {config.__class__} for this kind of AutoModel: {cls.__name__}.\n"
-            f"Model type should be one of {', '.join(c.__name__ for c in CRF_MODEL_MAPPINGS.keys())}."
+            f"Model type should be one of {', '.join(c for c in CRF_MODEL_MAPPINGS.keys())}."
         )
 
     @classmethod
@@ -44,12 +44,12 @@ class AutoCrfModelForKPExtraction:
                 return_unused_kwargs=True,
                 **kwargs,
             )
-        if type(config) in cls._model_mapping.keys():
-            model_class = CRF_MODEL_MAPPINGS[type(config)]
+        if config.__class__.__name__ in CRF_MODEL_MAPPINGS.keys():
+            model_class = CRF_MODEL_MAPPINGS[config.__class__.__name__]
             return model_class.from_pretrained(
                 model_name_or_path, *model_args, config=config, **kwargs
             )
         raise ValueError(
             f"Unrecognized configuration class {config.__class__} for this kind of AutoModel: {cls.__name__}.\n"
-            f"Model type should be one of {', '.join(c.__name__ for c in CRF_MODEL_MAPPINGS.keys())}."
+            f"Model type should be one of {', '.join(c for c in CRF_MODEL_MAPPINGS.keys())}."
         )
