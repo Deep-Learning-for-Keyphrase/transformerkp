@@ -1,7 +1,7 @@
-from cProfile import label
 import logging
 import os
 import sys
+from cProfile import label
 from tkinter.tix import COLUMN
 from typing import List, Union
 
@@ -12,12 +12,18 @@ from transformers import AutoConfig, AutoTokenizer, HfArgumentParser, set_seed
 from transformers.trainer_utils import get_last_checkpoint, is_main_process
 
 from ..data.preprocessing import tokenize_and_align_labels
+from ..metrics import compute_kp_level_metrics, compute_tag_level_metrics
+from .constants import ID_TO_LABELS, LABELS_TO_ID, NUM_LABELS, TAG_ENCODING
 from .data_collators import DataCollatorForKpExtraction
-from .models import AutoCRFModelforKPExtraction, AutoModelForKPExtraction
+from .models import AutoCrfModelForKPExtraction, AutoModelForKPExtraction
 from .train_eval_kp_tagger import train_eval_extraction_model
 from .trainer import CrfKpExtractionTrainer, KpExtractionTrainer
-from .utils import KEDataArguments, KEModelArguments, KETrainingArguments
-from .constants import ID_TO_LABELS, LABELS_TO_ID, TAG_ENCODING, NUM_LABELS
+from .utils import (
+    KEDataArguments,
+    KEModelArguments,
+    KETrainingArguments,
+    extract_kp_from_tags,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +34,7 @@ logger = logging.getLogger(__name__)
 # 4. add single args and remove data args dependency
 # 5. metrics : tag level
 #             keyphrase level
-# 6. confidence score calculation
+# 6. confidence score calculation calculate_confidence_score
 
 
 class KeyphraseTagger:
@@ -40,7 +46,7 @@ class KeyphraseTagger:
         tokenizer_name=None,
         trainer=None,
         data_collator=None,
-    ) -> None:  # TODO use this class in train and eval purpose as well
+    ) -> None:
         """_summary_"""
 
         self.config = AutoConfig.from_pretrained(
@@ -57,7 +63,7 @@ class KeyphraseTagger:
         self.trainer = KpExtractionTrainer if trainer is None else trainer
         self.data_collator = data_collator
         self.model_type = (
-            AutoCRFModelforKPExtraction if self.use_crf else AutoModelForKPExtraction
+            AutoCrfModelForKPExtraction if self.use_crf else AutoModelForKPExtraction
         )
 
         self.model = self.model_type.from_pretrained(
@@ -74,19 +80,38 @@ class KeyphraseTagger:
             text_column_name="",  # TODO(AD)
             label_column_name="",  # TODO(AD)
             tokenizer=self.tokenizer,
-            label_to_id={},  # TODO(AD)
+            label_to_id=LABELS_TO_ID,  # TODO(AD)
             label_all_tokens=True,  # TODO(AD) read from args
             max_seq_len=512,  # TODO(AD) read from args and set from model
             num_workers=4,  # TODO(AD) read from args
             overwrite_cache=True,  # TODO(AD) from args
         )
 
+    def compute_train_metrics(self, p):
+        ignore_value = -100
+        predictions, labels = p
+        predictions = np.argmax(predictions, axis=2)
+
+        # Remove ignored index (special tokens)
+        predicted_labels = [
+            [ID_TO_LABELS[p] for (p, l) in zip(prediction, label) if l != ignore_value]
+            for prediction, label in zip(predictions, labels)
+        ]
+        true_labels = [
+            [ID_TO_LABELS[l] for (p, l) in zip(prediction, label) if l != ignore_value]
+            for prediction, label in zip(predictions, labels)
+        ]
+
+        result = compute_tag_level_metrics(
+            predicted_labels=predicted_labels, true_labels=true_labels
+        )
+        return result
+
     def train(
         self,
         training_args,
         training_datasets,
         evaluation_datasets=None,
-        compute_metrics=None,
     ):
         # Detecting last checkpoint.
         training_args.do_train = True
@@ -159,7 +184,7 @@ class KeyphraseTagger:
             eval_dataset=evaluation_datasets if training_args.do_eval else None,
             tokenizer=self.tokenizer,
             data_collator=data_collator,
-            compute_metrics=compute_metrics,
+            compute_metrics=self.compute_train_metrics,
         )
         checkpoint = None
         if last_checkpoint is not None:
@@ -181,9 +206,7 @@ class KeyphraseTagger:
                 os.path.join(training_args.output_dir, "trainer_state.json")
             )
 
-    def evaluate(
-        self, eval_datasets, model_ckpt=None, compute_metrics=None, eval_args=None
-    ):
+    def evaluate(self, eval_datasets, model_ckpt=None, eval_args=None):
         if not eval_args:
             eval_args = KETrainingArguments(per_device_eval_batch_size=8, do_eval=True)
         eval_args.do_train = False
@@ -203,7 +226,7 @@ class KeyphraseTagger:
             eval_dataset=eval_datasets,
             tokenizer=self.tokenizer,
             data_collator=data_collator,
-            compute_metrics=compute_metrics,
+            compute_metrics=self.compute_train_metrics,
         )
 
         prediction_logits, labels, metrics = trainer.predict(eval_datasets)
@@ -321,7 +344,7 @@ class KeyphraseTagger:
             token_ids = self.tokenizer.convert_tokens_to_ids(
                 tokens
             )  # needed so that we can use batch decode directly and not mess up with convert tokens to string algorithm
-            extracted_kps, confidence_scores = self.extract_kp_from_tags(
+            extracted_kps, confidence_scores = extract_kp_from_tags(
                 token_ids,
                 tags,
                 tokenizer=self.tokenizer,
@@ -371,7 +394,7 @@ class KeyphraseTagger:
             token_ids = self.tokenizer.convert_tokens_to_ids(
                 tokens
             )  # needed so that we can use batch decode directly and not mess up with convert tokens to string algorithm
-            original_kps, _ = self.extract_kp_from_tags(
+            original_kps, _ = extract_kp_from_tags(
                 token_ids, tags, tokenizer=self.tokenizer
             )
 
@@ -385,77 +408,6 @@ class KeyphraseTagger:
             with_indices=True,
         )
         return datasets["original_keyphrase"]
-
-    @staticmethod
-    def extract_kp_from_tags(
-        token_ids, tags, tokenizer, scores=None, score_method=None
-    ):
-        if score_method:
-            assert len(tags) == len(
-                scores
-            ), "Score is not none and len of score is not equal to tags"
-        all_kps = []
-        all_kps_score = []
-        current_kp = []
-        current_score = []
-
-        for i, (id, tag) in enumerate(zip(token_ids, tags)):
-            if tag == "O" and len(current_kp) > 0:  # current kp ends
-                if score_method:
-                    confidence_score = KEDatasets.calculate_confidence_score(
-                        scores=current_score, score_method=score_method
-                    )
-                    current_score = []
-                    all_kps_score.append(confidence_score)
-
-                all_kps.append(current_kp)
-                current_kp = []
-            elif tag == "B":  # a new kp starts
-                if len(current_kp) > 0:
-                    if score_method:
-                        confidence_score = KEDatasets.calculate_confidence_score(
-                            scores=current_score, score_method=score_method
-                        )
-                        all_kps_score.append(confidence_score)
-                    all_kps.append(current_kp)
-                current_kp = []
-                current_score = []
-                current_kp.append(id)
-                if score_method:
-                    current_score.append(scores[i])
-            elif tag == "I":  # it is part of current kp so just append
-                current_kp.append(id)
-                if score_method:
-                    current_score.append(scores[i])
-        if len(current_kp) > 0:  # check for the last KP in sequence
-            all_kps.append(current_kp)
-            if score_method:
-                confidence_score = KEDatasets.calculate_confidence_score(
-                    scores=current_score, score_method=score_method
-                )
-                all_kps_score.append(confidence_score)
-        all_kps = tokenizer.batch_decode(
-            all_kps,
-            skip_special_tokens=True,
-            clean_up_tokenization_spaces=True,
-        )
-        final_kps, final_score = [], []
-        kps_set = {}
-        for i, kp in enumerate(all_kps):
-            if kp.lower() not in kps_set:
-                final_kps.append(kp.lower())
-                kps_set[kp.lower()] = -1
-                if score_method:
-                    kps_set[kp.lower()] = all_kps_score[i]
-                    final_score.append(all_kps_score[i])
-
-        if score_method:
-            assert len(final_kps) == len(
-                final_score
-            ), "len of kps and score calculated is not same"
-            return final_kps, final_score
-
-        return final_kps, None
 
     @staticmethod
     def train_and_eval_cli():
