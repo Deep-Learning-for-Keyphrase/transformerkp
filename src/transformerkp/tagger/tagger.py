@@ -389,7 +389,8 @@ class KeyphraseTagger:
         def get_extracted_keyphrases_(examples, idx):
             ids = examples["input_ids"]
             special_tok_mask = examples["special_tokens_mask"]
-            tokens = self.tokenizer.convert_ids_to_tokens(ids, skip_special_tokens=True)
+            tokens = self.tokenizer.convert_ids_to_tokens(ids)
+            tokens = [t for (t, m) in zip(tokens, special_tok_mask) if m == 0]
             tags = [
                 ID_TO_LABELS[p]
                 for (p, m) in zip(predicted_labels[idx], special_tok_mask)
@@ -446,7 +447,8 @@ class KeyphraseTagger:
             ids = examples["input_ids"]
             special_tok_mask = examples["special_tokens_mask"]
             labels = examples["labels"]
-            tokens = self.tokenizer.convert_ids_to_tokens(ids, skip_special_tokens=True)
+            tokens = self.tokenizer.convert_ids_to_tokens(ids)
+            tokens = [t for (t, m) in zip(tokens, special_tok_mask) if m == 0]
             tags = [
                 ID_TO_LABELS[p] for (p, m) in zip(labels, special_tok_mask) if m == 0
             ]
