@@ -22,12 +22,6 @@ from .utils import extract_kp_from_tags
 
 logger = logging.getLogger(__name__)
 
-# TODO(AD):
-# 1. remove id to label dependency
-# 2. NUm label as constant
-# 3. text columna dn laebls column name
-# 4. add single args and remove data args dependency
-
 
 class KeyphraseTagger:
     def __init__(
@@ -65,19 +59,6 @@ class KeyphraseTagger:
 
         self.trainer = KpExtractionTrainer(
             model=self.model, tokenizer=self.tokenizer, data_collator=self.data_collator
-        )
-
-    def preprocess_datasets(self, datasets):
-        return tokenize_and_align_labels(
-            datasets=datasets,
-            text_column_name="",  # TODO(AD)
-            label_column_name="",  # TODO(AD)
-            tokenizer=self.tokenizer,
-            label_to_id=LABELS_TO_ID,  # TODO(AD)
-            label_all_tokens=True,  # TODO(AD) read from args
-            max_seq_len=512,  # TODO(AD) read from args and set from model
-            num_workers=4,  # TODO(AD) read from args
-            overwrite_cache=True,  # TODO(AD) from args
         )
 
     def compute_train_metrics(self, p):
@@ -187,10 +168,32 @@ class KeyphraseTagger:
         padding = "max_length" if training_args.pad_to_max_length else False
 
         logger.info("preprocessing training datasets. . .")
-        training_datasets = self.preprocess_datasets(training_datasets)
+        training_datasets = tokenize_and_align_labels(
+            datasets=training_datasets,
+            text_column_name=training_args.text_column_name,
+            label_column_name=training_args.label_column_name,
+            tokenizer=self.tokenizer,
+            label_to_id=LABELS_TO_ID,
+            padding=padding,
+            label_all_tokens=training_args.label_all_tokens,
+            max_seq_length=max_seq_length,
+            num_workers=training_args.preprocessing_num_workers,
+            overwrite_cache=training_args.overwrite_cache,
+        )
         if evaluation_datasets:
             logger.info("preprocessing evaluation datasets. . .")
-            evaluation_datasets = self.preprocess_datasets(evaluation_datasets)
+            evaluation_datasets = tokenize_and_align_labels(
+                datasets=evaluation_datasets,
+                text_column_name=training_args.text_column_name,
+                label_column_name=training_args.label_column_name,
+                tokenizer=self.tokenizer,
+                label_to_id=LABELS_TO_ID,
+                padding=padding,
+                label_all_tokens=training_args.label_all_tokens,
+                max_seq_length=max_seq_length,
+                num_workers=training_args.preprocessing_num_workers,
+                overwrite_cache=training_args.overwrite_cache,
+            )
         trainer = (
             self.trainer
             if self.trainer
@@ -240,8 +243,29 @@ class KeyphraseTagger:
             )
         )
 
+        if eval_args.max_seq_length is None:
+            eval_args.max_seq_length = self.tokenizer.model_max_length
+        if eval_args.max_seq_length > self.tokenizer.model_max_length:
+            logger.warning(
+                f"The max_seq_length passed ({eval_args.max_seq_length}) is larger than the maximum length for the"
+                f"model ({self.tokenizer.model_max_length}). Using max_seq_length={self.tokenizer.model_max_length}."
+            )
+        max_seq_length = min(eval_args.max_seq_length, self.tokenizer.model_max_length)
+        padding = "max_length" if eval_args.pad_to_max_length else False
+
         logger.info("preprocessing evaluation datasets. . .")
-        eval_datasets = self.preprocess_datasets(eval_datasets)
+        eval_datasets = tokenize_and_align_labels(
+            datasets=eval_datasets,
+            text_column_name=eval_args.text_column_name,
+            label_column_name=eval_args.label_column_name,
+            tokenizer=self.tokenizer,
+            label_to_id=LABELS_TO_ID,
+            padding=padding,
+            label_all_tokens=eval_args.label_all_tokens,
+            max_seq_length=max_seq_length,
+            num_workers=eval_args.preprocessing_num_workers,
+            overwrite_cache=eval_args.overwrite_cache,
+        )
 
         trainer = (
             self.trainer
@@ -391,7 +415,7 @@ class KeyphraseTagger:
 
         datasets = datasets.map(
             get_extracted_keyphrases_,
-            num_proc=training_args.preprocessing_num_workers,  # TODO(AD) from args
+            num_proc=4,  # TODO(AD) from args
             with_indices=True,
         )
         if "confidence_score" in datasets.features:
@@ -432,7 +456,7 @@ class KeyphraseTagger:
 
         datasets = datasets.map(
             get_original_keyphrases_,
-            num_proc=training_args.preprocessing_num_workers,
+            num_proc=4,
             with_indices=True,
         )
         return datasets["original_keyphrase"]
