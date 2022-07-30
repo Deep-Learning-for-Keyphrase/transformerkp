@@ -16,7 +16,6 @@ from .args import KETrainingArguments
 from .constants import ID_TO_LABELS, LABELS_TO_ID, NUM_LABELS, TAG_ENCODING
 from .data_collators import DataCollatorForKpExtraction
 from .models import AutoCrfModelForKPExtraction, AutoModelForKPExtraction
-from .train_eval_kp_tagger import train_eval_extraction_model
 from .trainer import KpExtractionTrainer
 from .utils import extract_kp_from_tags
 
@@ -39,7 +38,7 @@ class KeyphraseTagger:
             config_name if config_name else model_name_or_path, num_labels=NUM_LABELS
         )
         self.use_crf = (
-            self.config.use_crf if self.config.use_crf is not None else use_crf
+            self.config.use_crf if hasattr(self.config, "use_crf") else use_crf
         )
 
         self.tokenizer = AutoTokenizer.from_pretrained(
@@ -149,7 +148,7 @@ class KeyphraseTagger:
         # initialize data collator
         data_collator = (
             self.data_collator
-            if self.data_collatore
+            if self.data_collator
             else DataCollatorForKpExtraction(
                 self.tokenizer, pad_to_multiple_of=8 if training_args.fp16 else None
             )
