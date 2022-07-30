@@ -1,7 +1,5 @@
 import numpy as np
 from nltk.stem.porter import PorterStemmer
-from seqeval.metrics import accuracy_score, f1_score, precision_score, recall_score
-from seqeval.scheme import IOB1, IOB2
 from datasets import load_metric
 
 
