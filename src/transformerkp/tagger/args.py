@@ -56,3 +56,8 @@ class KETrainingArguments(TrainingArguments):
             "one (in which case the other tokens will have a padding index)."
         },
     )
+
+    overwrite_cache: bool = field(
+        default=False,
+        metadata={"help": "Overwrite the cached training and evaluation sets"},
+    )
