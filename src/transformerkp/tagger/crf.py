@@ -184,11 +184,13 @@ class ConditionalRandomField(torch.nn.Module):
             # The code below fails in weird ways if this isn't a bool tensor, so we make sure.
             mask[tags == -100] = 0
             mask = mask.to(torch.bool)
-        tags[tags == -100] = self.label2id[self.id2label[0]]
+        is_masked = tags == -100
+        tags[is_masked] = self.label2id[self.id2label[0]]
 
         log_denominator = self._input_likelihood(inputs, mask)
 
         log_numerator = self._joint_likelihood(inputs, tags, mask)
+        # tags[is_masked] = -100
         return torch.sum(log_numerator - log_denominator)
 
     def viterbi_tags(
@@ -205,12 +207,6 @@ class ConditionalRandomField(torch.nn.Module):
         """
         if mask is None:
             mask = torch.ones(*logits.shape[:2], dtype=torch.bool, device=logits.device)
-
-        if top_k is None:
-            top_k = 1
-            flatten_output = True
-        else:
-            flatten_output = False
 
         _, max_seq_length, num_tags = logits.size()
 
@@ -275,14 +271,7 @@ class ConditionalRandomField(torch.nn.Module):
                 transition_matrix=transitions,
                 top_k=top_k,
             )
-            top_k_paths = []
-            for viterbi_path, viterbi_score in zip(viterbi_paths, viterbi_scores):
-                # Get rid of START and END sentinels and append.
-                viterbi_path = viterbi_path[1:-1]
-                top_k_paths.append((viterbi_path, viterbi_score.item()))
-            best_paths.append(top_k_paths)
-
-        if flatten_output:
-            return [top_k_paths[0] for top_k_paths in best_paths]
+            viterbi_paths = viterbi_paths[1:-1]
+            best_paths.append((viterbi_paths, viterbi_scores.item()))
 
         return best_paths
