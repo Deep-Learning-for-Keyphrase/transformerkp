@@ -81,6 +81,7 @@ class KeyphraseTagger:
         training_args,
         training_datasets,
         evaluation_datasets=None,
+        test_datasets=None,
     ):
         # Detecting last checkpoint.
         training_args.do_train = True
@@ -236,7 +237,10 @@ class KeyphraseTagger:
                         logger.info(f"  {key} = {value}")
                         writer.write(f"{key} = {value}\n")
 
-        # return train_result
+        if training_args.do_predict:
+            self.evaluate(eval_datasets=test_datasets, eval_args=training_args)
+
+        return train_result
 
     def evaluate(self, eval_datasets, model_ckpt=None, eval_args=None):
         if not eval_args:
@@ -387,7 +391,7 @@ class KeyphraseTagger:
             special_tok_mask = examples["special_tokens_mask"]
             tokens = self.tokenizer.convert_ids_to_tokens(ids, skip_special_tokens=True)
             tags = [
-                self.id_to_label[p]
+                ID_TO_LABELS[p]
                 for (p, m) in zip(predicted_labels[idx], special_tok_mask)
                 if m == 0
             ]
@@ -425,7 +429,7 @@ class KeyphraseTagger:
 
         datasets = datasets.map(
             get_extracted_keyphrases_,
-            num_proc=4,  # TODO(AD) from args
+            # num_proc=4,  # TODO (AD) multiprocess giving strange cuda error
             with_indices=True,
         )
         if "confidence_score" in datasets.features:
@@ -444,9 +448,7 @@ class KeyphraseTagger:
             labels = examples["labels"]
             tokens = self.tokenizer.convert_ids_to_tokens(ids, skip_special_tokens=True)
             tags = [
-                self.id_to_label[p]
-                for (p, m) in zip(labels, special_tok_mask)
-                if m == 0
+                ID_TO_LABELS[p] for (p, m) in zip(labels, special_tok_mask) if m == 0
             ]
             assert len(tokens) == len(
                 tags
@@ -466,7 +468,7 @@ class KeyphraseTagger:
 
         datasets = datasets.map(
             get_original_keyphrases_,
-            num_proc=4,
+            # num_proc=4, #TODO (AD) multiprocess giving strange cuda error
             with_indices=True,
         )
         return datasets["original_keyphrase"]
