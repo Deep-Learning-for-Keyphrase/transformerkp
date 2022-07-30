@@ -46,7 +46,7 @@ class KeyphraseTagger:
             use_fast=True,
             add_prefix_space=True,
         )
-        self.trainer = KpExtractionTrainer if trainer is None else trainer
+        self.trainer = trainer
         self.data_collator = data_collator
         self.model_type = (
             AutoCrfModelForKPExtraction if self.use_crf else AutoModelForKPExtraction
@@ -54,10 +54,6 @@ class KeyphraseTagger:
 
         self.model = self.model_type.from_pretrained(
             model_name_or_path, config=self.config
-        )
-
-        self.trainer = KpExtractionTrainer(
-            model=self.model, tokenizer=self.tokenizer, data_collator=self.data_collator
         )
 
     def compute_train_metrics(self, p):
@@ -175,7 +171,7 @@ class KeyphraseTagger:
             label_to_id=LABELS_TO_ID,
             padding=padding,
             label_all_tokens=training_args.label_all_tokens,
-            max_seq_length=max_seq_length,
+            max_seq_len=max_seq_length,
             num_workers=training_args.preprocessing_num_workers,
             overwrite_cache=training_args.overwrite_cache,
         )
@@ -189,10 +185,11 @@ class KeyphraseTagger:
                 label_to_id=LABELS_TO_ID,
                 padding=padding,
                 label_all_tokens=training_args.label_all_tokens,
-                max_seq_length=max_seq_length,
+                max_seq_len=max_seq_length,
                 num_workers=training_args.preprocessing_num_workers,
                 overwrite_cache=training_args.overwrite_cache,
             )
+        print(f"training datsets after process {training_datasets}")
         trainer = (
             self.trainer
             if self.trainer
@@ -225,7 +222,21 @@ class KeyphraseTagger:
             trainer.state.save_to_json(
                 os.path.join(training_args.output_dir, "trainer_state.json")
             )
-        return train_result
+
+        if training_args.do_eval:
+            logger.info("*** Evaluate ***")
+            eval_result = trainer.evaluate()
+            output_eval_file = os.path.join(
+                training_args.output_dir, "eval_results.txt"
+            )
+            if trainer.is_world_process_zero():
+                with open(output_eval_file, "w") as writer:
+                    logger.info("***** Eval results *****")
+                    for key, value in sorted(eval_result.items()):
+                        logger.info(f"  {key} = {value}")
+                        writer.write(f"{key} = {value}\n")
+
+        # return train_result
 
     def evaluate(self, eval_datasets, model_ckpt=None, eval_args=None):
         if not eval_args:
@@ -261,7 +272,7 @@ class KeyphraseTagger:
             label_to_id=LABELS_TO_ID,
             padding=padding,
             label_all_tokens=eval_args.label_all_tokens,
-            max_seq_length=max_seq_length,
+            max_seq_len=max_seq_length,
             num_workers=eval_args.preprocessing_num_workers,
             overwrite_cache=eval_args.overwrite_cache,
         )
