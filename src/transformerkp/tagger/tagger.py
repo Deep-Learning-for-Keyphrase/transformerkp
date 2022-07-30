@@ -2,7 +2,6 @@ import logging
 import os
 import sys
 from cProfile import label
-from tkinter.tix import COLUMN
 from typing import List, Union
 
 import numpy as np
@@ -13,17 +12,13 @@ from transformers.trainer_utils import get_last_checkpoint, is_main_process
 
 from ..data.preprocessing import tokenize_and_align_labels
 from ..metrics import compute_kp_level_metrics, compute_tag_level_metrics
+from .args import KETrainingArguments
 from .constants import ID_TO_LABELS, LABELS_TO_ID, NUM_LABELS, TAG_ENCODING
 from .data_collators import DataCollatorForKpExtraction
 from .models import AutoCrfModelForKPExtraction, AutoModelForKPExtraction
 from .train_eval_kp_tagger import train_eval_extraction_model
-from .trainer import CrfKpExtractionTrainer, KpExtractionTrainer
-from .utils import (
-    KEDataArguments,
-    KEModelArguments,
-    KETrainingArguments,
-    extract_kp_from_tags,
-)
+from .trainer import KpExtractionTrainer
+from .utils import extract_kp_from_tags
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +27,6 @@ logger = logging.getLogger(__name__)
 # 2. NUm label as constant
 # 3. text columna dn laebls column name
 # 4. add single args and remove data args dependency
-# 5. metrics : tag level
-#             keyphrase level
-# 6. confidence score calculation calculate_confidence_score
 
 
 class KeyphraseTagger:
@@ -50,11 +42,12 @@ class KeyphraseTagger:
         """_summary_"""
 
         self.config = AutoConfig.from_pretrained(
-            config_name if config_name else model_name_or_path
+            config_name if config_name else model_name_or_path, num_labels=NUM_LABELS
         )
         self.use_crf = (
             self.config.use_crf if self.config.use_crf is not None else use_crf
         )
+
         self.tokenizer = AutoTokenizer.from_pretrained(
             tokenizer_name if tokenizer_name else model_name_or_path,
             use_fast=True,
@@ -70,9 +63,9 @@ class KeyphraseTagger:
             model_name_or_path, config=self.config
         )
 
-        self.trainer = (
-            CrfKpExtractionTrainer if self.use_crf else KpExtractionTrainer
-        )(model=self.model, tokenizer=self.tokenizer, data_collator=self.data_collator)
+        self.trainer = KpExtractionTrainer(
+            model=self.model, tokenizer=self.tokenizer, data_collator=self.data_collator
+        )
 
     def preprocess_datasets(self, datasets):
         return tokenize_and_align_labels(
@@ -167,24 +160,49 @@ class KeyphraseTagger:
         if pad_token_none:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
+        self.config.use_crf = self.use_crf
+        self.config.label2id = LABELS_TO_ID
+        self.config.id2label = ID_TO_LABELS
+        if pad_token_none:
+            self.config.pad_token_id = self.config.eos_token_id
         # initialize data collator
-        data_collator = DataCollatorForKpExtraction(
-            self.tokenizer, pad_to_multiple_of=8 if training_args.fp16 else None
+        data_collator = (
+            self.data_collator
+            if self.data_collatore
+            else DataCollatorForKpExtraction(
+                self.tokenizer, pad_to_multiple_of=8 if training_args.fp16 else None
+            )
         )
+
+        if training_args.max_seq_length is None:
+            training_args.max_seq_length = self.tokenizer.model_max_length
+        if training_args.max_seq_length > self.tokenizer.model_max_length:
+            logger.warning(
+                f"The max_seq_length passed ({training_args.max_seq_length}) is larger than the maximum length for the"
+                f"model ({self.tokenizer.model_max_length}). Using max_seq_length={self.tokenizer.model_max_length}."
+            )
+        max_seq_length = min(
+            training_args.max_seq_length, self.tokenizer.model_max_length
+        )
+        padding = "max_length" if training_args.pad_to_max_length else False
 
         logger.info("preprocessing training datasets. . .")
         training_datasets = self.preprocess_datasets(training_datasets)
         if evaluation_datasets:
             logger.info("preprocessing evaluation datasets. . .")
             evaluation_datasets = self.preprocess_datasets(evaluation_datasets)
-        trainer = KpExtractionTrainer(
-            model=self.model,
-            args=training_args,
-            train_dataset=training_datasets if training_args.do_train else None,
-            eval_dataset=evaluation_datasets if training_args.do_eval else None,
-            tokenizer=self.tokenizer,
-            data_collator=data_collator,
-            compute_metrics=self.compute_train_metrics,
+        trainer = (
+            self.trainer
+            if self.trainer
+            else KpExtractionTrainer(
+                model=self.model,
+                args=training_args,
+                train_dataset=training_datasets if training_args.do_train else None,
+                eval_dataset=evaluation_datasets if training_args.do_eval else None,
+                tokenizer=self.tokenizer,
+                data_collator=data_collator,
+                compute_metrics=self.compute_train_metrics,
+            )
         )
         checkpoint = None
         if last_checkpoint is not None:
@@ -205,6 +223,7 @@ class KeyphraseTagger:
             trainer.state.save_to_json(
                 os.path.join(training_args.output_dir, "trainer_state.json")
             )
+        return train_result
 
     def evaluate(self, eval_datasets, model_ckpt=None, eval_args=None):
         if not eval_args:
@@ -213,20 +232,28 @@ class KeyphraseTagger:
         if model_ckpt:
             self.model = self.model_type.from_pretrained(model_ckpt)
 
-        data_collator = DataCollatorForKpExtraction(
-            self.tokenizer, pad_to_multiple_of=8 if eval_args.fp16 else None
+        data_collator = (
+            self.data_collator
+            if self.data_collator
+            else DataCollatorForKpExtraction(
+                self.tokenizer, pad_to_multiple_of=8 if eval_args.fp16 else None
+            )
         )
 
         logger.info("preprocessing evaluation datasets. . .")
         eval_datasets = self.preprocess_datasets(eval_datasets)
 
-        trainer = KpExtractionTrainer(
-            model=self.model,
-            args=eval_args,
-            eval_dataset=eval_datasets,
-            tokenizer=self.tokenizer,
-            data_collator=data_collator,
-            compute_metrics=self.compute_train_metrics,
+        trainer = (
+            self.trainer
+            if self.trainer
+            else KpExtractionTrainer(
+                model=self.model,
+                args=eval_args,
+                eval_dataset=eval_datasets,
+                tokenizer=self.tokenizer,
+                data_collator=data_collator,
+                compute_metrics=self.compute_train_metrics,
+            )
         )
 
         prediction_logits, labels, metrics = trainer.predict(eval_datasets)
@@ -255,7 +282,7 @@ class KeyphraseTagger:
             )
             original_kps = self.get_original_keyphrases(datasets=eval_datasets)
 
-            kp_level_metrics = compute_kp_level_metrics(  # TODO(AD) add mmetrics
+            kp_level_metrics = compute_kp_level_metrics(
                 predictions=predicted_kps, originals=original_kps, do_stem=True
             )
             df = pd.DataFrame.from_dict(
@@ -303,6 +330,7 @@ class KeyphraseTagger:
                         avg_predicted_kps
                     )
                 )
+        return kp_level_metrics
 
     def get_extracted_keyphrases(
         self, datasets, predicted_labels, label_score=None, score_method=None
@@ -363,7 +391,7 @@ class KeyphraseTagger:
 
         datasets = datasets.map(
             get_extracted_keyphrases_,
-            num_proc=self.data_args.preprocessing_num_workers,  # TODO(AD) from args
+            num_proc=training_args.preprocessing_num_workers,  # TODO(AD) from args
             with_indices=True,
         )
         if "confidence_score" in datasets.features:
@@ -404,26 +432,7 @@ class KeyphraseTagger:
 
         datasets = datasets.map(
             get_original_keyphrases_,
-            num_proc=self.data_args.preprocessing_num_workers,
+            num_proc=training_args.preprocessing_num_workers,
             with_indices=True,
         )
         return datasets["original_keyphrase"]
-
-    @staticmethod
-    def train_and_eval_cli():
-        parser = HfArgumentParser(
-            (KEModelArguments, KEDataArguments, KETrainingArguments)
-        )
-
-        if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
-            # If we pass only one argument to the script and it's the path to a json file,
-            # let's parse it to get our arguments.
-            model_args, data_args, training_args = parser.parse_json_file(
-                json_file=os.path.abspath(sys.argv[1])
-            )
-        else:
-            model_args, data_args, training_args = parser.parse_args_into_dataclasses()
-
-        return train_eval_extraction_model(
-            model_args=model_args, data_args=data_args, training_args=training_args
-        )
