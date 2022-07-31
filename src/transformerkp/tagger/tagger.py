@@ -474,3 +474,47 @@ class KeyphraseTagger:
             with_indices=True,
         )
         return datasets["original_keyphrase"]
+
+    def predict(self, texts: Union[List, str], score_aggregation_method="avg"):
+        if isinstance(texts, str):
+            texts = [texts]
+
+        tokenized_inputs = self.tokenizer(
+            texts,
+            padding=True,
+            truncation=True,
+            return_tensors="pt",
+            return_offsets_mapping=True,
+        )
+        token_offsets = tokenized_inputs.pop("offset_mapping")
+        token_ids = tokenized_inputs["token_ids"]
+
+        model_output = self.model(**tokenized_inputs)
+        prediction_logits = model_output.logits
+        prediction_logits = np.exp(prediction_logits)
+        predicted_labels = np.argmax(prediction_logits, axis=2)
+        label_score = np.amax(prediction_logits, axis=2) / np.sum(
+            prediction_logits, axis=2
+        )
+        predicted_tags = [ID_TO_LABELS[p] for p in predicted_labels]
+
+        extracted_kps, kps_offsets, confidence_socre = extract_kp_from_tags(
+            token_ids=token_ids,
+            tags=predicted_tags,
+            tokenizer=self.tokenizer,
+            scores=label_score,
+            score_method=score_aggregation_method,
+            return_offsets=True,
+        )
+
+        offsets = [
+            (min(token_offsets[x]), max(token_offsets[y])) for x, y in kps_offsets
+        ]
+
+        result = {
+            "keyphrases": extracted_kps,
+            "offsets": offsets,
+            "score": confidence_socre,
+        }
+
+        return result
