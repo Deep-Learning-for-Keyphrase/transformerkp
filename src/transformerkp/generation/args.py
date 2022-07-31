@@ -3,6 +3,7 @@ from typing import Optional, Union
 
 from transformers import TrainingArguments
 
+
 @dataclass
 class KGTrainingArguments(TrainingArguments):
     """
@@ -22,13 +23,10 @@ class KGTrainingArguments(TrainingArguments):
     """
 
     sortish_sampler: bool = field(
-        default=False,
-        metadata={
-            "help": "Whether to use SortishSampler or not."
-        }
+        default=False, metadata={"help": "Whether to use SortishSampler or not."}
     )
     predict_with_generate: bool = field(
-        default=False,
+        default=True,
         metadata={
             "help": "Whether to use generate to calculate generative metrics (ROUGE, BLEU)."
         },
@@ -179,7 +177,7 @@ class KGTrainingArguments(TrainingArguments):
         default=False,
         metadata={
             "help": "True if you want to concatenate the keyphrases in the order they appear. "
-                    "Abstractive keyphrases will be appended in the last with random/alphabetical ordering"
+            "Abstractive keyphrases will be appended in the last with random/alphabetical ordering"
         },
     )
     preprocessing_num_workers: Optional[int] = field(
@@ -188,6 +186,7 @@ class KGTrainingArguments(TrainingArguments):
             "help": "(Optional) The number of workers to be used during preprocessing of the data."
         },
     )
+
 
 class KGEvaluationArguments(KGTrainingArguments):
     pass
