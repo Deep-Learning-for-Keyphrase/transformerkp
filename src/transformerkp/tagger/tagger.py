@@ -55,6 +55,13 @@ class KeyphraseTagger:
         self.model = self.model_type.from_pretrained(
             model_name_or_path, config=self.config
         )
+        # Setup logging
+        logging.basicConfig(
+            format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
+            datefmt="%m/%d/%Y %H:%M:%S",
+            handlers=[logging.StreamHandler(sys.stdout)],
+        )
+        logger.setLevel(logging.INFO)
 
     def compute_train_metrics(self, p):
         ignore_value = -100
@@ -108,13 +115,6 @@ class KeyphraseTagger:
                     "the `--output_dir` or add `--overwrite_output_dir` to train from scratch."
                 )
 
-        # Setup logging
-        logging.basicConfig(
-            format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
-            datefmt="%m/%d/%Y %H:%M:%S",
-            handlers=[logging.StreamHandler(sys.stdout)],
-        )
-        logger.setLevel(logging.INFO)
         # logger.set_global_logging_level(logging.INFO)
 
         # Log on each process the small summary:
@@ -248,6 +248,7 @@ class KeyphraseTagger:
         eval_args.do_train = False
         if model_ckpt:
             self.model = self.model_type.from_pretrained(model_ckpt)
+            self.tokenizer = AutoTokenizer.from_pretrained(model_ckpt)
 
         data_collator = (
             self.data_collator
@@ -487,34 +488,40 @@ class KeyphraseTagger:
             return_offsets_mapping=True,
         )
         token_offsets = tokenized_inputs.pop("offset_mapping")
-        token_ids = tokenized_inputs["token_ids"]
+        token_ids = tokenized_inputs["input_ids"]
 
         model_output = self.model(**tokenized_inputs)
-        prediction_logits = model_output.logits
+        prediction_logits = model_output.logits.detach().tolist()
         prediction_logits = np.exp(prediction_logits)
         predicted_labels = np.argmax(prediction_logits, axis=2)
-        label_score = np.amax(prediction_logits, axis=2) / np.sum(
+        label_scores = np.amax(prediction_logits, axis=2) / np.sum(
             prediction_logits, axis=2
         )
-        predicted_tags = [ID_TO_LABELS[p] for p in predicted_labels]
 
-        extracted_kps, kps_offsets, confidence_socre = extract_kp_from_tags(
-            token_ids=token_ids,
-            tags=predicted_tags,
-            tokenizer=self.tokenizer,
-            scores=label_score,
-            score_method=score_aggregation_method,
-            return_offsets=True,
-        )
+        result = []
+        for token_id, predicted_label, label_score, token_offset in zip(
+            token_ids, predicted_labels, label_scores, token_offsets
+        ):
+            predicted_tag = [ID_TO_LABELS[p] for p in predicted_label]
+            extracted_kps, kps_offsets, confidence_socre = extract_kp_from_tags(
+                token_ids=token_id,
+                tags=predicted_tag,
+                tokenizer=self.tokenizer,
+                scores=label_score,
+                score_method=score_aggregation_method,
+                return_offsets=True,
+            )
+            offsets = [
+                (int(min(token_offset[x])), int(max(token_offset[y])))
+                for (x, y) in kps_offsets
+            ]
 
-        offsets = [
-            (min(token_offsets[x]), max(token_offsets[y])) for x, y in kps_offsets
-        ]
-
-        result = {
-            "keyphrases": extracted_kps,
-            "offsets": offsets,
-            "score": confidence_socre,
-        }
+            result.append(
+                {
+                    "keyphrases": extracted_kps,
+                    "offsets": offsets,
+                    "score": confidence_socre,
+                }
+            )
 
         return result
