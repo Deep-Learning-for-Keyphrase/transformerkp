@@ -288,7 +288,6 @@ class KeyphraseTagger:
             else KpExtractionTrainer(
                 model=self.model,
                 args=eval_args,
-                eval_dataset=eval_datasets,
                 tokenizer=self.tokenizer,
                 data_collator=data_collator,
                 compute_metrics=self.compute_train_metrics,
