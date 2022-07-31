@@ -377,5 +377,45 @@ class KeyphraseGenerator:
                     logger.info(f"  {key} = {value}")
                     writer.write(f"{key} = {value}\n")
 
-    def predict(self):
-        pass
+    def generate(
+        self,
+        texts,
+        num_return_sequences=1,
+        max_length=50,
+        num_beams=3,
+        output_seq_score=True,
+    ):
+
+        assert (
+            num_beams >= num_return_sequences
+        ), "num_beams>=num_return_sequences for generation to work"
+        if isinstance(texts, str):
+            texts = [texts]
+
+        tokenized_inputs = self.tokenizer(
+            texts,
+            padding=True,
+            truncation=True,
+            return_tensors="pt",
+        )
+        # print(self.model.device)
+        gen_out = self.model.generate(
+            inputs=tokenized_inputs["input_ids"].to(device=self.model.device),
+            max_length=max_length,
+            num_beams=num_beams,
+            num_return_sequences=num_return_sequences,
+            attention_mask=tokenized_inputs["attention_mask"].to(
+                device=self.model.device
+            )
+            if "attention_mask" in tokenized_inputs
+            else None,
+            output_scores=output_seq_score,
+            return_dict_in_generate=True,
+        )
+        generated_seq = self.tokenizer.batch_decode(
+            gen_out.sequences,
+            skip_special_tokens=True,
+            clean_up_tokenization_spaces=True,
+        )
+
+        return generated_seq, gen_out.sequences_scores
