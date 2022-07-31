@@ -213,7 +213,7 @@ class KeyphraseGenerator:
                 eval_dataset=validation_data if training_args.do_eval else None,
                 tokenizer=self.tokenizer,
                 data_collator=data_collator,
-                # compute_metrics=self.compute_train_metrics,
+                compute_metrics=self.compute_train_metrics,
             )
         )
         checkpoint = None
@@ -236,9 +236,21 @@ class KeyphraseGenerator:
                 os.path.join(training_args.output_dir, "trainer_state.json")
             )
 
+        max_length = (
+            training_args.generation_max_length
+            if training_args.generation_max_length is not None
+            else training_args.val_max_keyphrases_length
+        )
+        num_beams = (
+            training_args.num_beams
+            if training_args.num_beams is not None
+            else training_args.generation_num_beams
+        )
         if training_args.do_eval:
             logger.info("*** Evaluate ***")
-            eval_result = trainer.evaluate()
+            eval_result = trainer.evaluate(
+                max_length=max_length, num_beams=num_beams, metric_key_prefix="eval"
+            )
             output_eval_file = os.path.join(
                 training_args.output_dir, "eval_results.txt"
             )
@@ -261,7 +273,7 @@ class KeyphraseGenerator:
         self,
         test_data: Dataset,
         model_ckpt: Union[str, None] = None,
-        eval_args: Union[KGEvaluationArguments, None] = None,
+        eval_args: Union[KGTrainingArguments, None] = None,
     ):
         if not eval_args:
             eval_args = KGTrainingArguments(per_device_eval_batch_size=4, do_eval=True)
@@ -274,7 +286,10 @@ class KeyphraseGenerator:
             self.data_collator
             if self.data_collator
             else DataCollatorForKPGeneration(
-                self.tokenizer, pad_to_multiple_of=8 if eval_args.fp16 else None
+                self.tokenizer,
+                model=self.model,
+                label_pad_token_id=self.label_pad_token_id,
+                pad_to_multiple_of=8 if eval_args.fp16 else None,
             )
         )
 
@@ -287,6 +302,7 @@ class KeyphraseGenerator:
             )
         max_seq_length = min(eval_args.max_seq_length, self.tokenizer.model_max_length)
         padding = "max_length" if eval_args.pad_to_max_length else False
+        self.max_keyphrases_length = eval_args.max_keyphrases_length
 
         logger.info("preprocessing evaluation dataset. . .")
         test_data = preprocess_data_for_keyphrase_generation(
@@ -307,109 +323,50 @@ class KeyphraseGenerator:
         trainer = (
             self.trainer
             if self.trainer
-            else KPGenerationTrainer(
+            else KpGenerationTrainer(
                 model=self.model,
                 args=eval_args,
-                eval_dataset=test_data,
                 tokenizer=self.tokenizer,
                 data_collator=data_collator,
-                # compute_metrics=self.compute_train_metrics,
+                compute_metrics=self.compute_train_metrics,
             )
         )
+        max_length = (
+            eval_args.generation_max_length
+            if eval_args.generation_max_length is not None
+            else eval_args.val_max_keyphrases_length
+        )
+        num_beams = (
+            eval_args.num_beams
+            if eval_args.num_beams is not None
+            else eval_args.generation_num_beams
+        )
 
-        # results = trainer.predict(test_data, max_length=max_seq_length, num_beams=eval_args.num_beams)
-        # decoded_preds = self.tokenizer.decode(
-        #     predictions,
-        #     skip_special_tokens=True,
-        #     clean_up_tokenization_spaces=True,
-        # )
-        # print(decoded_preds)
-        # prediction_logits = np.exp(prediction_logits)
-        # predicted_labels = np.argmax(prediction_logits, axis=2)
-        # label_score = np.amax(prediction_logits, axis=2) / np.sum(
-        #     prediction_logits, axis=2
-        # )
-        #
-        # output_test_results_file = os.path.join(
-        #     eval_args.output_dir, "test_results.txt"
-        # )
-        #
-        # output_test_predictions_file = os.path.join(
-        #     eval_args.output_dir, "test_predictions.csv"
-        # )
-        # output_test_predictions_BIO_file = os.path.join(
-        #     eval_args.output_dir, "test_predictions_BIO.txt"
-        # )
-        # if trainer.is_world_process_zero():
-        #     predicted_kps, confidence_scores = self.get_extracted_keyphrases(
-        #         datasets=test_data,
-        #         predicted_labels=predicted_labels,
-        #         label_score=label_score,
-        #         score_method=eval_args.score_aggregation_method,
-        #     )
-        #     original_kps = self.get_original_keyphrases(datasets=test_data)
-        #
-        #     kp_level_metrics = compute_kp_level_metrics(
-        #         predictions=predicted_kps,
-        #         originals=original_kps,
-        #         do_stem=True
-        #     )
-        #
-        #     df = pd.DataFrame.from_dict(
-        #         {
-        #             "extracted_keyphrase": predicted_kps,
-        #             "original_keyphrases": original_kps,
-        #             "confidence_scores": confidence_scores,
-        #             # TODO(AD) add functionality for offsets retrivial
-        #         }
-        #     )
-        #
-        #     df.to_csv(output_test_predictions_file, index=False)
-        #
-        #     with open(output_test_results_file, "w") as writer:
-        #         for key, value in sorted(metrics.items()):
-        #             logger.info(f"  {key} = {value}")
-        #             writer.write(f"{key} = {value}\n")
-        #
-        #         logger.info("Keyphrase level metrics\n")
-        #         writer.write("Keyphrase level metrics\n")
-        #
-        #         for key, value in sorted(kp_level_metrics.items()):
-        #             logger.info(f"  {key} = {value}")
-        #             writer.write(f"{key} = {value}\n")
-        #
-        #         total_keyphrases = sum([len(x) for x in confidence_scores])
-        #         total_confidence_scores = sum([sum(x) for x in confidence_scores])
-        #         avg_confidence_scores = total_confidence_scores / total_keyphrases
-        #         total_examples = len(predicted_kps)
-        #
-        #         avg_predicted_kps = total_keyphrases / total_examples
-        #
-        #         logger.info(
-        #             "average confidence score: {}\n".format(avg_confidence_scores)
-        #         )
-        #         logger.info(
-        #             "average number of keyphrases predicted: {}\n".format(
-        #                 avg_predicted_kps
-        #             )
-        #         )
-        #         writer.write(
-        #             "average confidence score: {}\n".format(avg_confidence_scores)
-        #         )
-        #         writer.write(
-        #             "average number of keyphrases predicted: {}\n".format(
-        #                 avg_predicted_kps
-        #             )
-        #         )
-        # return kp_level_metrics
+        logger.info("*** Predict ***")
+        results = trainer.predict(test_data)
+        metrics = results.metrics
+        pre = results.predictions
+        decod = self.tokenizer.batch_decode(
+            pre,
+            skip_special_tokens=True,
+            clean_up_tokenization_spaces=True,
+        )
+        trainer.save_metrics("predict", metrics)
+        output_test_results_file = os.path.join(
+            eval_args.output_dir, "test_results.txt"
+        )
+        output_test_predictions_file = os.path.join(
+            eval_args.output_dir, "test_predictions.csv"
+        )
+        if trainer.is_world_process_zero():
+            df = pd.DataFrame.from_dict({"generated_keyphrase": decod})
+            df.to_csv(output_test_predictions_file, index=False)
+            with open(output_test_results_file, "w") as writer:
+                for key, value in sorted(metrics.items()):
+                    logger.info(f"  {key} = {value}")
+                    writer.write(f"{key} = {value}\n")
 
     def predict(self):
-        pass
-
-    def get_predicted_keyphrases(self):
-        pass
-
-    def get_original_keyphrases(self):
         pass
 
 
@@ -447,12 +404,12 @@ if __name__ == "__main__":
         keyphrase_sep_token="[KP_SEP]",
         # overwrite_cache=True,
     )
-    # keyphrase_gen.train(
-    #     training_args=train_args,
-    #     train_data=kg_data.train,
-    #     validation_data=kg_data.validation,
-    #     test_data=kg_data.test
-    # )
-    keyphrase_gen.evaluate(
-        test_data=kg_data.test, model_ckpt="/data/models/test", eval_args=train_args
+    keyphrase_gen.train(
+        training_args=train_args,
+        train_data=kg_data.train,
+        validation_data=kg_data.validation,
+        test_data=kg_data.test,
     )
+    # keyphrase_gen.evaluate(
+    #     test_data=kg_data.test, model_ckpt="/data/models/test", eval_args=train_args
+    # )
