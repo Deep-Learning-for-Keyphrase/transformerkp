@@ -16,12 +16,12 @@ from transformers.trainer_utils import (
 )
 from datasets import Dataset
 
-from transformerkp.generation.trainer import KPGenerationTrainer
 from transformerkp.generation.data_collators import DataCollatorForKPGeneration
 from transformerkp.generation.args import KGTrainingArguments
 from transformerkp.generation.args import KGEvaluationArguments
 from transformerkp.data.preprocessing import preprocess_data_for_keyphrase_generation
 from transformerkp.metrics import compute_kp_level_metrics
+from transformerkp.generation.trainer import KpGenerationTrainer
 
 logger = logging.getLogger(__name__)
 
@@ -135,6 +135,7 @@ class KeyphraseGenerator:
         # add special token in tokenizer.
         self.keyphrase_sep_token = training_args.keyphrase_sep_token
         self.tokenizer.add_tokens(training_args.keyphrase_sep_token)
+        self.model.resize_token_embeddings(len(self.tokenizer))
         self.label_pad_token_id = (
             -100
             if training_args.ignore_pad_token_for_loss
@@ -165,16 +166,14 @@ class KeyphraseGenerator:
         padding: Union[str, bool] = (
             "max_length" if training_args.pad_to_max_length else False
         )
-
-        self.tokenizer.add_tokens(training_args.keyphrase_sep_token)
-        self.model.resize_token_embeddings(len(self.tokenizer))
+        self.max_keyphrases_length = training_args.max_keyphrases_length
 
         logger.info("preprocessing training datasets. . .")
         # TODO: preprocess and prepare the training data
         train_data = preprocess_data_for_keyphrase_generation(
+            data=train_data,
             tokenizer=self.tokenizer,
             kp_sep_token=training_args.keyphrase_sep_token,
-            data=train_data,
             text_column_name=training_args.text_column_name,
             label_column_name=training_args.label_column_name,
             max_seq_length=max_seq_length,
@@ -207,7 +206,7 @@ class KeyphraseGenerator:
         trainer = (
             self.trainer
             if self.trainer
-            else KPGenerationTrainer(
+            else KpGenerationTrainer(
                 model=self.model,
                 args=training_args,
                 train_dataset=train_data if training_args.do_train else None,
