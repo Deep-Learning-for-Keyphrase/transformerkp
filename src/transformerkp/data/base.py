@@ -12,25 +12,37 @@ from datasets import IterableDatasetDict
 
 
 class KPDataset(ABC):
-    """Base class for all the dataset classes used for loading datasets for keyphrase extraction and generation.
-    """
+    """Base class for all the dataset classes used for loading datasets for keyphrase extraction and generation."""
+
     @property
     @abstractmethod
-    def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+    def train(
+        self,
+    ) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
         """Gets the train split"""
-        raise NotImplementedError("please implement the train property in the derived class.")
+        raise NotImplementedError(
+            "please implement the train property in the derived class."
+        )
 
     @property
     @abstractmethod
-    def validation(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+    def validation(
+        self,
+    ) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
         """Gets the validation split"""
-        raise NotImplementedError("please implement the validation property in the derived class.")
+        raise NotImplementedError(
+            "please implement the validation property in the derived class."
+        )
 
     @property
     @abstractmethod
-    def test(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
+    def test(
+        self,
+    ) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
         """Gets the test split"""
-        raise NotImplementedError("please implement the test property in the derived class.")
+        raise NotImplementedError(
+            "please implement the test property in the derived class."
+        )
 
 
 @dataclass
@@ -40,6 +52,7 @@ class KPDataArguments:
     All the child dataset argument classes should extend this class for accommodating the arguments relevant and
     specific to them.
     """
+
     dataset_name: Optional[str] = field(
         default=None,
         metadata={
@@ -100,7 +113,7 @@ class KPDataArguments:
         },
     )
     splits: Optional[List[str]] = field(
-        default_factory=lambda: ['train', 'validation', 'test'],
+        default_factory=lambda: ["train", "validation", "test"],
         metadata={
             "help": """(Optional) Names of the data splits to be loaded. For example, sometimes, one might only need 
              to load the test split of the data."""
@@ -117,6 +130,7 @@ class KPDataArguments:
 
 class DataLoaderFactory(ABC):
     """Factory class for loading different datasets for keyphrase extraction and generation."""
+
     @abstractmethod
     def load(self, dataset_identifier: str, params: Dict = {}) -> KPDataset:
         """Loads the dataset mapped to the specified identifier and given keyword arguments"""
@@ -125,6 +139,7 @@ class DataLoaderFactory(ABC):
 
 class DataLoaderRegistry(ABC):
     """Class for data loader registry. Helps in registering new data loaders and retrieve them."""
+
     @abstractmethod
     def register(self, data_identifier: str, data_loader: KPDataset) -> None:
         """Registers a new dataset with a new identifier mapped to its implemented data loader. Only to be used during
@@ -139,36 +154,32 @@ class DataLoaderRegistry(ABC):
 
 
 class BaseDataset(ABC):
-
     def __init__(
-            self,
-            mode: str,
+        self,
+        mode: str,
     ):
         self._mode = mode
-        self._splits: Union[List[str], None] = [
-                                             "train",
-                                             "validation",
-                                             "test"
-                                         ]
-        self._max_seq_length: int = 512,
-        self._label_all_tokens: bool = True,
-        self._cache_dir: str = None,
-        self._padding: Union[str, bool] = "max_length",
-        self._max_keyphrases_length: int = 100,
-        self._kp_sep_token: str = "[KP_SEP]",
-        self._doc_stride: int = 128,
-        self._n_best_size: int = 20,
-        self._num_beams: int = 5,
-        self._ignore_pad_token_for_loss: bool = True,
-        self._present_keyphrase_only: bool = False,
-        self._cat_sequence: bool = False,
+        self._splits: Union[List[str], None] = ["train", "validation", "test"]
+        self._max_seq_length: int = 512
+        self._label_all_tokens: bool = True
+        self._cache_dir: str = None
+        self._padding: Union[str, bool] = "max_length"
+        self._max_keyphrases_length: int = 100
+        self._kp_sep_token: str = "[KP_SEP]"
+        self._doc_stride: int = 128
+        self._n_best_size: int = 20
+        self._num_beams: int = 5
+        self._ignore_pad_token_for_loss: bool = True
+        self._present_keyphrase_only: bool = False
+        self._cat_sequence: bool = False
         self._ke_params: Dict = {}
         self._kg_params: Dict = {}
 
     @abstractmethod
     def load(self):
-        raise NotImplementedError("please implement the train property in the derived class.")
-
+        raise NotImplementedError(
+            "please implement the train property in the derived class."
+        )
 
     def set_ke_params(self):
         self._ke_params = {
