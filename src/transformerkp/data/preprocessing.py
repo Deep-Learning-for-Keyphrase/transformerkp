@@ -6,6 +6,8 @@ The module contains the following functions:
 """
 from transformers import AutoTokenizer
 from typing import Union, Any, Dict, List
+
+from datasets import Dataset
 from transformers.tokenization_utils_base import BatchEncoding
 
 
@@ -69,9 +71,28 @@ def tokenize_and_align_labels(
     max_seq_len: int,
     num_workers: int,
     overwrite_cache: bool,
-    ):
+    ) -> Dataset:
+    """
 
-    def tokenize_and_align(examples):
+    Args:
+        datasets:
+        text_column_name:
+        label_column_name:
+        tokenizer:
+        label_to_id:
+        padding:
+        label_all_tokens:
+        max_seq_len:
+        num_workers:
+        overwrite_cache:
+
+    Returns:
+
+    """
+
+    def tokenize_and_align(
+            examples
+    ):
         tokenized_inputs = tokenize_text(
             examples[text_column_name],
             tokenizer=tokenizer,
@@ -120,3 +141,69 @@ def tokenize_and_align_labels(
         num_proc=num_workers,
         load_from_cache_file=not overwrite_cache,
     )
+
+def preprocess_data_for_keyphrase_generation(
+        data: Dataset,
+        tokenizer: Any,
+        kp_sep_token: str,
+        text_column_name: str,
+        label_column_name: str,
+        max_seq_length: int,
+        max_keyphrases_length: int,
+        padding: Union[str, bool],
+        ignore_pad_token_for_loss: bool,
+        truncation: bool,
+        num_workers: int,
+    ) -> Dataset:
+
+    def process_target_col(
+            examples
+    ):
+        examples[label_column_name] = f"||{kp_sep_token}||".join(examples[label_column_name])
+        examples[label_column_name] = examples[label_column_name].split("||")
+        return examples
+
+    def prepare_inputs_and_target_for_kg(
+            examples,
+        ):
+
+        # tokenized the input text
+        inputs = tokenizer(
+            text=examples[text_column_name],
+            max_length=max_seq_length,
+            padding=padding,
+            truncation=truncation,
+            is_split_into_words=True
+        )
+
+        targets = tokenizer(
+            examples[label_column_name],
+            max_length=max_keyphrases_length,
+            padding=padding,
+            truncation=truncation,
+            is_split_into_words=True
+        )
+
+        if padding and ignore_pad_token_for_loss:
+            targets["input_ids"] = [
+                (t if t != tokenizer.pad_token_id else -100)
+                for t in targets["input_ids"]
+            ]
+
+        inputs["labels"] = targets["input_ids"]
+
+        return inputs
+
+    # add keyphrase separator token in between the target keyphrases
+    data: Dataset = data.map(
+        process_target_col,
+    )
+
+    # process and prepare data
+    data: Dataset = data.map(
+        prepare_inputs_and_target_for_kg,
+        batched=True,
+        num_proc=num_workers,
+    )
+
+    return data
