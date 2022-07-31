@@ -250,7 +250,7 @@ class KGDataset(KPDataset):
         if "test" in self._datasets:
             self._test = self._datasets["test"]
 
-        if self._present_keyphrase_only:
+        if self._present_keyphrase_only == True:
             if self._train:
                 self._train = self._train.remove_columns(["extractive_keyphrases"])
             if self._validation:
