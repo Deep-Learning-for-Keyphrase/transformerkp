@@ -16,12 +16,12 @@ from transformers.trainer_utils import (
 )
 from datasets import Dataset
 
-from transformerkp.generation.data_collators import DataCollatorForKPGeneration
-from transformerkp.generation.args import KGTrainingArguments
-from transformerkp.generation.args import KGEvaluationArguments
-from transformerkp.data.preprocessing import preprocess_data_for_keyphrase_generation
-from transformerkp.metrics import compute_kp_level_metrics
-from transformerkp.generation.trainer import KpGenerationTrainer
+from .data_collators import DataCollatorForKPGeneration
+from .args import KGTrainingArguments
+from .args import KGEvaluationArguments
+from ..data.preprocessing import preprocess_data_for_keyphrase_generation
+from ..metrics import compute_kp_level_metrics
+from .trainer import KpGenerationTrainer
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class KeyphraseGenerator:
         model_name_or_path: str,
         config_name: Union[str, None] = None,
         tokenizer_name: Union[str, None] = None,
-        trainer: Union[KPGenerationTrainer, None] = None,
+        trainer: Union[KpGenerationTrainer, None] = None,
         data_collator: Union[DataCollatorForKPGeneration, None] = None,
     ) -> None:
         """_summary_"""
@@ -45,7 +45,7 @@ class KeyphraseGenerator:
             use_fast=True,
             add_prefix_space=True,
         )
-        self.trainer: Union[KPGenerationTrainer, None] = trainer
+        self.trainer: Union[KpGenerationTrainer, None] = trainer
         self.data_collator: Union[DataCollatorForKPGeneration, None] = data_collator
         self.model: Any = AutoModelForSeq2SeqLM.from_pretrained(
             model_name_or_path, config=self.config
@@ -202,7 +202,7 @@ class KeyphraseGenerator:
                 num_workers=training_args.preprocessing_num_workers,
             )
 
-        # TODO: need to implement KPGenerationTrainer
+        # TODO: need to implement KpGenerationTrainer
         trainer = (
             self.trainer
             if self.trainer
@@ -213,7 +213,9 @@ class KeyphraseGenerator:
                 eval_dataset=validation_data if training_args.do_eval else None,
                 tokenizer=self.tokenizer,
                 data_collator=data_collator,
-                compute_metrics=self.compute_train_metrics,
+                compute_metrics=self.compute_train_metrics
+                if training_args.predict_with_generate
+                else None,
             )
         )
         checkpoint = None
@@ -328,7 +330,9 @@ class KeyphraseGenerator:
                 args=eval_args,
                 tokenizer=self.tokenizer,
                 data_collator=data_collator,
-                compute_metrics=self.compute_train_metrics,
+                compute_metrics=self.compute_train_metrics
+                if eval_args.predict_with_generate
+                else None,
             )
         )
         max_length = (
@@ -343,10 +347,15 @@ class KeyphraseGenerator:
         )
 
         logger.info("*** Predict ***")
-        results = trainer.predict(test_data)
+        results = trainer.predict(
+            test_data,
+            max_length=max_length,
+            num_beams=num_beams,
+            metric_key_prefix="predict",
+        )
         metrics = results.metrics
         pre = results.predictions
-        decod = self.tokenizer.batch_decode(
+        decoded = self.tokenizer.batch_decode(
             pre,
             skip_special_tokens=True,
             clean_up_tokenization_spaces=True,
@@ -359,7 +368,9 @@ class KeyphraseGenerator:
             eval_args.output_dir, "test_predictions.csv"
         )
         if trainer.is_world_process_zero():
-            df = pd.DataFrame.from_dict({"generated_keyphrase": decod})
+            df = pd.DataFrame.from_dict(
+                {"generated_keyphrase": decoded.split(eval_args.keyphrase_sep_token)}
+            )
             df.to_csv(output_test_predictions_file, index=False)
             with open(output_test_results_file, "w") as writer:
                 for key, value in sorted(metrics.items()):
@@ -368,48 +379,3 @@ class KeyphraseGenerator:
 
     def predict(self):
         pass
-
-
-if __name__ == "__main__":
-    from transformerkp.data.dataset_loaders import Inspec
-
-    keyphrase_gen = KeyphraseGenerator(
-        model_name_or_path="bloomberg/KeyBART",
-        tokenizer_name="roberta-large",
-    )
-    print(keyphrase_gen)
-    print(keyphrase_gen.tokenizer)
-    assert keyphrase_gen.tokenizer.name_or_path == "roberta-large"
-    assert keyphrase_gen.model is not None
-
-    kg_data = Inspec(mode="generation").load()
-    train_args = KGTrainingArguments(
-        output_dir="/data/models/test",
-        learning_rate=5e-5,
-        overwrite_output_dir=True,
-        num_train_epochs=1,
-        per_device_train_batch_size=4,
-        per_device_eval_batch_size=4,
-        do_train=True,
-        do_eval=True,
-        do_predict=True,
-        evaluation_strategy="steps",
-        save_steps=800,
-        eval_steps=200,
-        logging_steps=50,
-        text_column_name="document",
-        label_column_name="extractive_keyphrases",
-        preprocessing_num_workers=5,
-        pad_to_max_length=False,
-        keyphrase_sep_token="[KP_SEP]",
-        # overwrite_cache=True,
-    )
-    keyphrase_gen.train(
-        training_args=train_args,
-        train_data=kg_data.train,
-        validation_data=kg_data.validation,
-        test_data=kg_data.test,
-    )
-    # keyphrase_gen.evaluate(
-    #     test_data=kg_data.test, model_ckpt="/data/models/test", eval_args=train_args
-    # )
