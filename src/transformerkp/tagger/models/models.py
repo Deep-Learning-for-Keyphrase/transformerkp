@@ -76,7 +76,7 @@ class BertCrfModelForKpExtraction(BertPreTrainedModel):
         for i, path in enumerate(best_path):
             for j, tag in enumerate(path):
                 # j+ 1 to ignore clf token at begning
-                logits[i, j + 1, int(tag)] = 1.0
+                logits[i, j + 1 - attention_mask[0], int(tag)] = 1.0
 
         if not return_dict:
             output = (logits,) + outputs[2:]
@@ -157,7 +157,7 @@ class RobertaCrfForKpExtraction(RobertaPreTrainedModel):
         for i, path in enumerate(best_path):
             for j, tag in enumerate(path):
                 # j+ 1 to ignore clf token at begning
-                logits[i, j + 1, int(tag)] = 1.0
+                logits[i, j + 1 - attention_mask[0], int(tag)] = 1.0
 
         if not return_dict:
             output = (logits,) + outputs[2:]
