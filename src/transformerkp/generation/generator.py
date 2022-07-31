@@ -9,7 +9,11 @@ from transformers import AutoTokenizer
 from transformers import AutoModelForSeq2SeqLM
 from transformers import AutoConfig
 from transformers import set_seed
-from transformers.trainer_utils import get_last_checkpoint, is_main_process
+from transformers.trainer_utils import (
+    get_last_checkpoint,
+    is_main_process,
+    EvalPrediction,
+)
 from datasets import Dataset
 
 from transformerkp.generation.trainer import KPGenerationTrainer
@@ -17,12 +21,12 @@ from transformerkp.generation.data_collators import DataCollatorForKPGeneration
 from transformerkp.generation.args import KGTrainingArguments
 from transformerkp.generation.args import KGEvaluationArguments
 from transformerkp.data.preprocessing import preprocess_data_for_keyphrase_generation
-
+from transformerkp.metrics import compute_kp_level_metrics
 
 logger = logging.getLogger(__name__)
 
-class KeyphraseGenerator:
 
+class KeyphraseGenerator:
     def __init__(
         self,
         model_name_or_path: str,
@@ -43,24 +47,47 @@ class KeyphraseGenerator:
         )
         self.trainer: Union[KPGenerationTrainer, None] = trainer
         self.data_collator: Union[DataCollatorForKPGeneration, None] = data_collator
-        self.model: Any = AutoModelForSeq2SeqLM.from_pretrained(model_name_or_path)
+        self.model: Any = AutoModelForSeq2SeqLM.from_pretrained(
+            model_name_or_path, config=self.config
+        )
+        if self.model.config.decoder_start_token_id is None:
+            raise ValueError(
+                "Make sure that `config.decoder_start_token_id` is correctly defined"
+            )
 
+    def compute_train_metrics(self, p: EvalPrediction):
+        predictions = self.tokenizer.batch_decode(
+            p.predictions,
+            skip_special_tokens=True,
+            clean_up_tokenization_spaces=True,
+        )
+        labels = [
+            [x for x in label if x != self.label_pad_token_id] for label in p.label_ids
+        ]
+        originals = self.tokenizer.batch_decode(
+            labels,
+            skip_special_tokens=True,
+            clean_up_tokenization_spaces=True,
+        )
+        # get keyphrases list from string
+        if self.task_type == "one2many":
+            predictions = [pred.split(self.keyphrase_sep_token) for pred in predictions]
+            originals = [orig.split(self.keyphrase_sep_token) for orig in originals]
 
-    def compute_train_metrics(self):
-        pass
+        return compute_kp_level_metrics(predictions, originals)
 
     def train(
-            self,
-            training_args: KGTrainingArguments,
-            train_data: Dataset,
-            validation_data: Union[Dataset, None] = None,
-            test_data: Union[Dataset, None] = None,
-
+        self,
+        training_args: KGTrainingArguments,
+        train_data: Dataset,
+        validation_data: Union[Dataset, None] = None,
+        test_data: Union[Dataset, None] = None,
     ):
         # Detecting last checkpoint.
         training_args.do_train = True
         if validation_data:
             training_args.do_eval = True
+        self.task_type = training_args.task_type
         last_checkpoint = None
         if (
             os.path.isdir(training_args.output_dir)
@@ -105,20 +132,23 @@ class KeyphraseGenerator:
 
         # Set seed before initializing model.
         set_seed(training_args.seed)
-
-        # set pad token if none
-        pad_token_none = self.tokenizer.pad_token == None
-        if pad_token_none:
-            self.tokenizer.pad_token = self.tokenizer.eos_token
-        if pad_token_none:
-            self.config.pad_token_id = self.config.eos_token_id
+        # add special token in tokenizer.
+        self.keyphrase_sep_token = training_args.keyphrase_sep_token
+        self.tokenizer.add_tokens(training_args.keyphrase_sep_token)
+        self.label_pad_token_id = (
+            -100
+            if training_args.ignore_pad_token_for_loss
+            else self.tokenizer.pad_token_id
+        )
         # initialize data collator
         data_collator = (
             self.data_collator
             if self.data_collator
             else DataCollatorForKPGeneration(
                 self.tokenizer,
-                pad_to_multiple_of=8 if training_args.fp16 else None
+                model=self.model,
+                label_pad_token_id=self.label_pad_token_id,
+                pad_to_multiple_of=8 if training_args.fp16 else None,
             )
         )
 
@@ -132,7 +162,9 @@ class KeyphraseGenerator:
         max_seq_length: int = min(
             training_args.max_seq_length, self.tokenizer.model_max_length
         )
-        padding: Union[str, bool] = "max_length" if training_args.pad_to_max_length else False
+        padding: Union[str, bool] = (
+            "max_length" if training_args.pad_to_max_length else False
+        )
 
         self.tokenizer.add_tokens(training_args.keyphrase_sep_token)
         self.model.resize_token_embeddings(len(self.tokenizer))
@@ -227,16 +259,13 @@ class KeyphraseGenerator:
         return train_result
 
     def evaluate(
-            self,
-            test_data: Dataset,
-            model_ckpt: Union[str, None] = None,
-            eval_args: Union[KGEvaluationArguments, None] = None
+        self,
+        test_data: Dataset,
+        model_ckpt: Union[str, None] = None,
+        eval_args: Union[KGEvaluationArguments, None] = None,
     ):
         if not eval_args:
-            eval_args = KGTrainingArguments(
-                per_device_eval_batch_size=4,
-                do_eval=True
-            )
+            eval_args = KGTrainingArguments(per_device_eval_batch_size=4, do_eval=True)
         eval_args.do_train = False
         if model_ckpt:
             self.model = AutoModelForSeq2SeqLM.from_pretrained(model_ckpt)
@@ -246,8 +275,7 @@ class KeyphraseGenerator:
             self.data_collator
             if self.data_collator
             else DataCollatorForKPGeneration(
-                self.tokenizer,
-                pad_to_multiple_of=8 if eval_args.fp16 else None
+                self.tokenizer, pad_to_multiple_of=8 if eval_args.fp16 else None
             )
         )
 
@@ -385,6 +413,7 @@ class KeyphraseGenerator:
     def get_original_keyphrases(self):
         pass
 
+
 if __name__ == "__main__":
     from transformerkp.data.dataset_loaders import Inspec
 
@@ -426,9 +455,5 @@ if __name__ == "__main__":
     #     test_data=kg_data.test
     # )
     keyphrase_gen.evaluate(
-        test_data=kg_data.test,
-        model_ckpt="/data/models/test",
-        eval_args=train_args
+        test_data=kg_data.test, model_ckpt="/data/models/test", eval_args=train_args
     )
-
-
