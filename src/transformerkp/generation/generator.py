@@ -365,7 +365,7 @@ class KeyphraseGenerator:
         )
         metrics = results.metrics
         pre = results.predictions
-        decoded = self.tokenizer.batch_decode(
+        decoded_kps = self.tokenizer.batch_decode(
             pre,
             skip_special_tokens=True,
             clean_up_tokenization_spaces=True,
@@ -379,7 +379,11 @@ class KeyphraseGenerator:
         )
         if trainer.is_world_process_zero():
             df = pd.DataFrame.from_dict(
-                {"generated_keyphrase": decoded.split(eval_args.keyphrase_sep_token)}
+                {
+                    "generated_keyphrase": [
+                        kps.split(eval_args.keyphrase_sep_token) for kps in decoded_kps
+                    ]
+                }
             )
             df.to_csv(output_test_predictions_file, index=False)
             with open(output_test_results_file, "w") as writer:
@@ -427,5 +431,15 @@ class KeyphraseGenerator:
             skip_special_tokens=True,
             clean_up_tokenization_spaces=True,
         )
+        seq_scores = gen_out.sequences_scores
 
-        return generated_seq, gen_out.sequences_scores
+        result = []
+        for kps, kp_score in zip(generated_seq, seq_scores):
+            result.append(
+                {
+                    "keyphrases": kps.split(self.config.keyphrase_sep_token),
+                    "score": float(kp_score),
+                }
+            )
+
+        return result
