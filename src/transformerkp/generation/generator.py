@@ -25,6 +25,10 @@ from .trainer import KpGenerationTrainer
 
 logger = logging.getLogger(__name__)
 
+LABEL_PAD_TOKEN_ID = -100
+
+# TODO task type, kp_sep token in trained config
+
 
 class KeyphraseGenerator:
     def __init__(
@@ -55,6 +59,14 @@ class KeyphraseGenerator:
                 "Make sure that `config.decoder_start_token_id` is correctly defined"
             )
 
+        # Setup logging
+        logging.basicConfig(
+            format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
+            datefmt="%m/%d/%Y %H:%M:%S",
+            handlers=[logging.StreamHandler(sys.stdout)],
+        )
+        logger.setLevel(logging.INFO)
+
     def compute_train_metrics(self, p: EvalPrediction):
         predictions = self.tokenizer.batch_decode(
             p.predictions,
@@ -62,7 +74,7 @@ class KeyphraseGenerator:
             clean_up_tokenization_spaces=True,
         )
         labels = [
-            [x for x in label if x != self.label_pad_token_id] for label in p.label_ids
+            [x for x in label if x != LABEL_PAD_TOKEN_ID] for label in p.label_ids
         ]
         originals = self.tokenizer.batch_decode(
             labels,
@@ -70,9 +82,13 @@ class KeyphraseGenerator:
             clean_up_tokenization_spaces=True,
         )
         # get keyphrases list from string
-        if self.task_type == "one2many":
-            predictions = [pred.split(self.keyphrase_sep_token) for pred in predictions]
-            originals = [orig.split(self.keyphrase_sep_token) for orig in originals]
+        if self.config.task_type == "one2many":
+            predictions = [
+                pred.split(self.config.keyphrase_sep_token) for pred in predictions
+            ]
+            originals = [
+                orig.split(self.config.keyphrase_sep_token) for orig in originals
+            ]
 
         return compute_kp_level_metrics(predictions, originals)
 
@@ -87,7 +103,7 @@ class KeyphraseGenerator:
         training_args.do_train = True
         if validation_data:
             training_args.do_eval = True
-        self.task_type = training_args.task_type
+
         last_checkpoint = None
         if (
             os.path.isdir(training_args.output_dir)
@@ -109,15 +125,6 @@ class KeyphraseGenerator:
                     "the `--output_dir` or add `--overwrite_output_dir` to train from scratch."
                 )
 
-        # Setup logging
-        logging.basicConfig(
-            format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
-            datefmt="%m/%d/%Y %H:%M:%S",
-            handlers=[logging.StreamHandler(sys.stdout)],
-        )
-        logger.setLevel(logging.INFO)
-        # logger.set_global_logging_level(logging.INFO)
-
         # Log on each process the small summary:
         logger.warning(
             f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}"
@@ -132,11 +139,12 @@ class KeyphraseGenerator:
 
         # Set seed before initializing model.
         set_seed(training_args.seed)
+        self.config.task_type = training_args.task_type
         # add special token in tokenizer.
-        self.keyphrase_sep_token = training_args.keyphrase_sep_token
+        self.config.keyphrase_sep_token = training_args.keyphrase_sep_token
         self.tokenizer.add_tokens(training_args.keyphrase_sep_token)
         self.model.resize_token_embeddings(len(self.tokenizer))
-        self.label_pad_token_id = (
+        LABEL_PAD_TOKEN_ID = (
             -100
             if training_args.ignore_pad_token_for_loss
             else self.tokenizer.pad_token_id
@@ -148,7 +156,7 @@ class KeyphraseGenerator:
             else DataCollatorForKPGeneration(
                 self.tokenizer,
                 model=self.model,
-                label_pad_token_id=self.label_pad_token_id,
+                label_pad_token_id=LABEL_PAD_TOKEN_ID,
                 pad_to_multiple_of=8 if training_args.fp16 else None,
             )
         )
@@ -283,14 +291,16 @@ class KeyphraseGenerator:
         if model_ckpt:
             self.model = AutoModelForSeq2SeqLM.from_pretrained(model_ckpt)
             self.tokenizer = AutoTokenizer.from_pretrained(model_ckpt)
-
+        LABEL_PAD_TOKEN_ID = (
+            -100 if eval_args.ignore_pad_token_for_loss else self.tokenizer.pad_token_id
+        )
         data_collator = (
             self.data_collator
             if self.data_collator
             else DataCollatorForKPGeneration(
                 self.tokenizer,
                 model=self.model,
-                label_pad_token_id=self.label_pad_token_id,
+                label_pad_token_id=LABEL_PAD_TOKEN_ID,
                 pad_to_multiple_of=8 if eval_args.fp16 else None,
             )
         )
@@ -355,7 +365,7 @@ class KeyphraseGenerator:
         )
         metrics = results.metrics
         pre = results.predictions
-        decoded = self.tokenizer.batch_decode(
+        decoded_kps = self.tokenizer.batch_decode(
             pre,
             skip_special_tokens=True,
             clean_up_tokenization_spaces=True,
@@ -369,7 +379,11 @@ class KeyphraseGenerator:
         )
         if trainer.is_world_process_zero():
             df = pd.DataFrame.from_dict(
-                {"generated_keyphrase": decoded.split(eval_args.keyphrase_sep_token)}
+                {
+                    "generated_keyphrase": [
+                        kps.split(eval_args.keyphrase_sep_token) for kps in decoded_kps
+                    ]
+                }
             )
             df.to_csv(output_test_predictions_file, index=False)
             with open(output_test_results_file, "w") as writer:
@@ -377,5 +391,55 @@ class KeyphraseGenerator:
                     logger.info(f"  {key} = {value}")
                     writer.write(f"{key} = {value}\n")
 
-    def predict(self):
-        pass
+    def generate(
+        self,
+        texts,
+        num_return_sequences=1,
+        max_length=50,
+        num_beams=3,
+        output_seq_score=True,
+    ):
+
+        assert (
+            num_beams >= num_return_sequences
+        ), "num_beams>=num_return_sequences for generation to work"
+        if isinstance(texts, str):
+            texts = [texts]
+
+        tokenized_inputs = self.tokenizer(
+            texts,
+            padding=True,
+            truncation=True,
+            return_tensors="pt",
+        )
+        # print(self.model.device)
+        gen_out = self.model.generate(
+            inputs=tokenized_inputs["input_ids"].to(device=self.model.device),
+            max_length=max_length,
+            num_beams=num_beams,
+            num_return_sequences=num_return_sequences,
+            attention_mask=tokenized_inputs["attention_mask"].to(
+                device=self.model.device
+            )
+            if "attention_mask" in tokenized_inputs
+            else None,
+            output_scores=output_seq_score,
+            return_dict_in_generate=True,
+        )
+        generated_seq = self.tokenizer.batch_decode(
+            gen_out.sequences,
+            skip_special_tokens=True,
+            clean_up_tokenization_spaces=True,
+        )
+        seq_scores = gen_out.sequences_scores
+
+        result = []
+        for kps, kp_score in zip(generated_seq, seq_scores):
+            result.append(
+                {
+                    "keyphrases": kps.split(self.config.keyphrase_sep_token),
+                    "score": float(kp_score),
+                }
+            )
+
+        return result
