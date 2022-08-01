@@ -86,13 +86,13 @@ class KeyphraseTagger:
     def train(
         self,
         training_args,
-        training_datasets,
-        evaluation_datasets=None,
-        test_datasets=None,
+        train_data,
+        validation_data=None,
+        test_data=None,
     ):
         # Detecting last checkpoint.
         training_args.do_train = True
-        if evaluation_datasets:
+        if validation_data:
             training_args.do_eval = True
         last_checkpoint = None
         if (
@@ -164,8 +164,8 @@ class KeyphraseTagger:
         padding = "max_length" if training_args.pad_to_max_length else False
 
         logger.info("preprocessing training datasets. . .")
-        training_datasets = tokenize_and_align_labels(
-            datasets=training_datasets,
+        train_data = tokenize_and_align_labels(
+            datasets=train_data,
             text_column_name=training_args.text_column_name,
             label_column_name=training_args.label_column_name,
             tokenizer=self.tokenizer,
@@ -176,10 +176,10 @@ class KeyphraseTagger:
             num_workers=training_args.preprocessing_num_workers,
             overwrite_cache=training_args.overwrite_cache,
         )
-        if evaluation_datasets:
+        if validation_data:
             logger.info("preprocessing evaluation datasets. . .")
-            evaluation_datasets = tokenize_and_align_labels(
-                datasets=evaluation_datasets,
+            validation_data = tokenize_and_align_labels(
+                datasets=validation_data,
                 text_column_name=training_args.text_column_name,
                 label_column_name=training_args.label_column_name,
                 tokenizer=self.tokenizer,
@@ -190,15 +190,14 @@ class KeyphraseTagger:
                 num_workers=training_args.preprocessing_num_workers,
                 overwrite_cache=training_args.overwrite_cache,
             )
-        print(f"training datsets after process {training_datasets}")
         trainer = (
             self.trainer
             if self.trainer
             else KpExtractionTrainer(
                 model=self.model,
                 args=training_args,
-                train_dataset=training_datasets if training_args.do_train else None,
-                eval_dataset=evaluation_datasets if training_args.do_eval else None,
+                train_dataset=train_data if training_args.do_train else None,
+                eval_dataset=validation_data if training_args.do_eval else None,
                 tokenizer=self.tokenizer,
                 data_collator=data_collator,
                 compute_metrics=self.compute_train_metrics,
@@ -238,11 +237,11 @@ class KeyphraseTagger:
                         writer.write(f"{key} = {value}\n")
 
         if training_args.do_predict:
-            self.evaluate(eval_datasets=test_datasets, eval_args=training_args)
+            self.evaluate(test_data=test_data, eval_args=training_args)
 
         return train_result
 
-    def evaluate(self, eval_datasets, model_ckpt=None, eval_args=None):
+    def evaluate(self, test_data, model_ckpt=None, eval_args=None):
         if not eval_args:
             eval_args = KETrainingArguments(per_device_eval_batch_size=8, do_eval=True)
         eval_args.do_train = False
@@ -269,8 +268,8 @@ class KeyphraseTagger:
         padding = "max_length" if eval_args.pad_to_max_length else False
 
         logger.info("preprocessing evaluation datasets. . .")
-        eval_datasets = tokenize_and_align_labels(
-            datasets=eval_datasets,
+        test_data = tokenize_and_align_labels(
+            datasets=test_data,
             text_column_name=eval_args.text_column_name,
             label_column_name=eval_args.label_column_name,
             tokenizer=self.tokenizer,
@@ -294,7 +293,7 @@ class KeyphraseTagger:
             )
         )
 
-        prediction_logits, labels, metrics = trainer.predict(eval_datasets)
+        prediction_logits, labels, metrics = trainer.predict(test_data)
         prediction_logits = np.exp(prediction_logits)
         predicted_labels = np.argmax(prediction_logits, axis=2)
         label_score = np.amax(prediction_logits, axis=2) / np.sum(
@@ -313,12 +312,12 @@ class KeyphraseTagger:
         )
         if trainer.is_world_process_zero():
             predicted_kps, confidence_scores = self.get_extracted_keyphrases(
-                datasets=eval_datasets,
+                datasets=test_data,
                 predicted_labels=predicted_labels,
                 label_score=label_score,
                 score_method=eval_args.score_aggregation_method,
             )
-            original_kps = self.get_original_keyphrases(datasets=eval_datasets)
+            original_kps = self.get_original_keyphrases(datasets=test_data)
 
             kp_level_metrics = compute_kp_level_metrics(
                 predictions=predicted_kps, originals=original_kps, do_stem=True
