@@ -1,0 +1,1216 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.1, mkdocs-material-8.3.9">
+    
+    
+      
+        <title>Keyphrase Extraction and Generation Data - transformerkp</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.1d29e8d0.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.cbb835fc.min.css">
+        
+      
+      
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#keyphrase-extraction-and-generation-datasets" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="transformerkp" class="md-header__button md-logo" aria-label="transformerkp" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            transformerkp
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Keyphrase Extraction and Generation Data
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="transformerkp" class="md-nav__button md-logo" aria-label="transformerkp" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    transformerkp
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Welcome
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        Getting started
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          How-To Guides
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="How-To Guides" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          How-To Guides
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_1" type="checkbox" id="__nav_3_1" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_1">
+          Datasets
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Datasets" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_1">
+          <span class="md-nav__icon md-icon"></span>
+          Datasets
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Keyphrase Extraction and Generation Data
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Keyphrase Extraction and Generation Data
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#loading-datasets" class="md-nav__link">
+    Loading datasets
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loading-data-for-training-and-evaluating-keyphrase-extraction-models" class="md-nav__link">
+    Loading data for training and evaluating keyphrase extraction models
+  </a>
+  
+    <nav class="md-nav" aria-label="Loading data for training and evaluating keyphrase extraction models">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#load-publicly-available-data-from-huggingface-hub-for-keyphrase-extraction" class="md-nav__link">
+    Load publicly available data from Huggingface Hub for keyphrase extraction
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load-publicly-available-data-from-huggingface-hub-for-keyphrase-generation" class="md-nav__link">
+    Load publicly available data from Huggingface Hub for keyphrase generation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load-your-own-dataset-for-keyphrase-extraction" class="md-nav__link">
+    Load your own dataset for keyphrase extraction
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load-your-own-dataset-for-keyphrase-generation" class="md-nav__link">
+    Load your own dataset for keyphrase generation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load-your-dataset-to-a-pandas-dataframe" class="md-nav__link">
+    Load your dataset to a pandas dataframe
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#saving" class="md-nav__link">
+    Saving
+  </a>
+  
+    <nav class="md-nav" aria-label="Saving">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#saving-in-json-format" class="md-nav__link">
+    Saving in JSON Format
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#saving-in-parquet-format" class="md-nav__link">
+    Saving in Parquet format
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#saving-in-csv-format" class="md-nav__link">
+    Saving in CSV format
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#available-datasets" class="md-nav__link">
+    Available Datasets
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#publicly-available-datasets" class="md-nav__link">
+    Publicly Available Datasets
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          Tutorials
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Tutorials" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Tutorials
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/identifying-keyphrases-from-text/" class="md-nav__link">
+        Identifying Keyphrases from Text
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5">
+          Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5_1" type="checkbox" id="__nav_5_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5_1">
+          transformerkp
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="transformerkp" data-md-level="2">
+        <label class="md-nav__title" for="__nav_5_1">
+          <span class="md-nav__icon md-icon"></span>
+          transformerkp
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5_1_1" type="checkbox" id="__nav_5_1_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5_1_1">
+          data
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="data" data-md-level="3">
+        <label class="md-nav__title" for="__nav_5_1_1">
+          <span class="md-nav__icon md-icon"></span>
+          data
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5_1_1_1" type="checkbox" id="__nav_5_1_1_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5_1_1_1">
+          extraction
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="extraction" data-md-level="4">
+        <label class="md-nav__title" for="__nav_5_1_1_1">
+          <span class="md-nav__icon md-icon"></span>
+          extraction
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/extraction/ke_data_args/" class="md-nav__link">
+        ke_data_args
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/extraction/ke_datasets/" class="md-nav__link">
+        ke_datasets
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5_1_1_2" type="checkbox" id="__nav_5_1_1_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5_1_1_2">
+          generation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="generation" data-md-level="4">
+        <label class="md-nav__title" for="__nav_5_1_1_2">
+          <span class="md-nav__icon md-icon"></span>
+          generation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/generation/kg_data_args/" class="md-nav__link">
+        kg_data_args
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/generation/kg_datasets/" class="md-nav__link">
+        kg_datasets
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/base/" class="md-nav__link">
+        base
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/dataset_loaders/" class="md-nav__link">
+        dataset_loaders
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/dataset_loader_factory/" class="md-nav__link">
+        dataset_loader_factory
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/data/registry/" class="md-nav__link">
+        registry
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#loading-datasets" class="md-nav__link">
+    Loading datasets
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loading-data-for-training-and-evaluating-keyphrase-extraction-models" class="md-nav__link">
+    Loading data for training and evaluating keyphrase extraction models
+  </a>
+  
+    <nav class="md-nav" aria-label="Loading data for training and evaluating keyphrase extraction models">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#load-publicly-available-data-from-huggingface-hub-for-keyphrase-extraction" class="md-nav__link">
+    Load publicly available data from Huggingface Hub for keyphrase extraction
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load-publicly-available-data-from-huggingface-hub-for-keyphrase-generation" class="md-nav__link">
+    Load publicly available data from Huggingface Hub for keyphrase generation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load-your-own-dataset-for-keyphrase-extraction" class="md-nav__link">
+    Load your own dataset for keyphrase extraction
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load-your-own-dataset-for-keyphrase-generation" class="md-nav__link">
+    Load your own dataset for keyphrase generation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load-your-dataset-to-a-pandas-dataframe" class="md-nav__link">
+    Load your dataset to a pandas dataframe
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#saving" class="md-nav__link">
+    Saving
+  </a>
+  
+    <nav class="md-nav" aria-label="Saving">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#saving-in-json-format" class="md-nav__link">
+    Saving in JSON Format
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#saving-in-parquet-format" class="md-nav__link">
+    Saving in Parquet format
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#saving-in-csv-format" class="md-nav__link">
+    Saving in CSV format
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#available-datasets" class="md-nav__link">
+    Available Datasets
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#publicly-available-datasets" class="md-nav__link">
+    Publicly Available Datasets
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+
+
+<h1 id="keyphrase-extraction-and-generation-datasets">Keyphrase Extraction and Generation Datasets</h1>
+<h2 id="loading-datasets">Loading datasets</h2>
+<p>This <em>how to guide</em> looks at loading different datasets for training and evaluating keyphrase extraction and generation 
+models. The library intends to provide support for loading both publicly available datasets as well as privately held
+datasets. Current version only supports loading publicly available datasets. 
+<a href="./#publicly-available-datasets">See below</a> for a full list of publicly available datasets.</p>
+<h2 id="loading-data-for-training-and-evaluating-keyphrase-extraction-models">Loading data for training and evaluating keyphrase extraction models</h2>
+<h3 id="load-publicly-available-data-from-huggingface-hub-for-keyphrase-extraction">Load publicly available data from Huggingface Hub for keyphrase extraction</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">transformerkp.data.dataset_loaders</span> <span class="kn">import</span> <span class="n">Inspec</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">inspec_data_ke</span> <span class="o">=</span> <span class="n">Inspec</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;extraction&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">inspec_data_ke</span><span class="o">.</span><span class="n">train</span><span class="p">)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">inspec_data_ke</span><span class="o">.</span><span class="n">test</span><span class="p">)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="nb">print</span><span class="p">(</span><span class="n">inspec_data_ke</span><span class="o">.</span><span class="n">validation</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Dataset<span class="o">({</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    features: <span class="o">[</span><span class="s1">&#39;id&#39;</span>, <span class="s1">&#39;document&#39;</span>, <span class="s1">&#39;doc_bio_tags&#39;</span><span class="o">]</span>,
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    num_rows: <span class="m">1000</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="o">})</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Dataset<span class="o">({</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    features: <span class="o">[</span><span class="s1">&#39;id&#39;</span>, <span class="s1">&#39;document&#39;</span>, <span class="s1">&#39;doc_bio_tags&#39;</span><span class="o">]</span>,
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    num_rows: <span class="m">500</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="o">})</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>Dataset<span class="o">({</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    features: <span class="o">[</span><span class="s1">&#39;id&#39;</span>, <span class="s1">&#39;document&#39;</span>, <span class="s1">&#39;doc_bio_tags&#39;</span><span class="o">]</span>,
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    num_rows: <span class="m">500</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="o">})</span>
+</code></pre></div>
+Since, we treat <a href="https://link.springer.com/chapter/10.1007/978-3-030-45442-5_41">keyphrase extraction as a sequence tagging task</a>
+we expect the availability of the input document with tokens tagged with the <a href="https://en.wikipedia.org/wiki/Inside%E2%80%93outside%E2%80%93beginning_(tagging)">B-I-O scheme</a>. The <code>document</code> field of the dataset
+contains the whitespace tokenized document and the  <code>doc_bio_tags</code> column of the dataset
+contains their corresponding tags in the <a href="https://en.wikipedia.org/wiki/Inside%E2%80%93outside%E2%80%93beginning_(tagging)">B-I-O scheme</a>. </p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># iterate over the dataset</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">for</span> <span class="n">entries</span> <span class="ow">in</span> <span class="n">inspec_data_ke</span><span class="o">.</span><span class="n">train</span><span class="p">:</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Document: &quot;</span><span class="p">,</span> <span class="n">entries</span><span class="p">[</span><span class="s2">&quot;document&quot;</span><span class="p">])</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Doc BIO Tags: &quot;</span><span class="p">,</span> <span class="n">entries</span><span class="p">[</span><span class="s2">&quot;doc_bio_tags&quot;</span><span class="p">])</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">----</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Output:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Document:  <span class="o">[</span><span class="s1">&#39;A&#39;</span>, <span class="s1">&#39;conflict&#39;</span>, <span class="s1">&#39;between&#39;</span>, <span class="s1">&#39;language&#39;</span>, <span class="s1">&#39;and&#39;</span>, <span class="s1">&#39;atomistic&#39;</span>, <span class="s1">&#39;information&#39;</span>, <span class="s1">&#39;Fred&#39;</span>, <span class="s1">&#39;Dretske&#39;</span>, <span class="s1">&#39;and&#39;</span>, <span class="s1">&#39;Jerry&#39;</span>, <span class="s1">&#39;Fodor&#39;</span>, <span class="s1">&#39;are&#39;</span>, <span class="s1">&#39;responsible&#39;</span>, <span class="s1">&#39;for&#39;</span>, <span class="s1">&#39;popularizing&#39;</span>, <span class="s1">&#39;three&#39;</span>, <span class="s1">&#39;well-known&#39;</span>, <span class="s1">&#39;theses&#39;</span>, <span class="s1">&#39;in&#39;</span>, <span class="s1">&#39;contemporary&#39;</span>, <span class="s1">&#39;philosophy&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;mind&#39;</span>, <span class="s1">&#39;:&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;thesis&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;Information-Based&#39;</span>, <span class="s1">&#39;Semantics&#39;</span>, <span class="s1">&#39;-LRB-&#39;</span>, <span class="s1">&#39;IBS&#39;</span>, <span class="s1">&#39;-RRB-&#39;</span>, <span class="s1">&#39;,&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;thesis&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;Content&#39;</span>, <span class="s1">&#39;Atomism&#39;</span>, <span class="s1">&#39;-LRB-&#39;</span>, <span class="s1">&#39;Atomism&#39;</span>, <span class="s1">&#39;-RRB-&#39;</span>, <span class="s1">&#39;and&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;thesis&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;Language&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;Thought&#39;</span>, <span class="s1">&#39;-LRB-&#39;</span>, <span class="s1">&#39;LOT&#39;</span>, <span class="s1">&#39;-RRB-&#39;</span>, <span class="s1">&#39;.&#39;</span>, <span class="s1">&#39;LOT&#39;</span>, <span class="s1">&#39;concerns&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;semantically&#39;</span>, <span class="s1">&#39;relevant&#39;</span>, <span class="s1">&#39;structure&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;representations&#39;</span>, <span class="s1">&#39;involved&#39;</span>, <span class="s1">&#39;in&#39;</span>, <span class="s1">&#39;cognitive&#39;</span>, <span class="s1">&#39;states&#39;</span>, <span class="s1">&#39;such&#39;</span>, <span class="s1">&#39;as&#39;</span>, <span class="s1">&#39;beliefs&#39;</span>, <span class="s1">&#39;and&#39;</span>, <span class="s1">&#39;desires&#39;</span>, <span class="s1">&#39;.&#39;</span>, <span class="s1">&#39;It&#39;</span>, <span class="s1">&#39;maintains&#39;</span>, <span class="s1">&#39;that&#39;</span>, <span class="s1">&#39;all&#39;</span>, <span class="s1">&#39;such&#39;</span>, <span class="s1">&#39;representations&#39;</span>, <span class="s1">&#39;must&#39;</span>, <span class="s1">&#39;have&#39;</span>, <span class="s1">&#39;syntactic&#39;</span>, <span class="s1">&#39;structures&#39;</span>, <span class="s1">&#39;mirroring&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;structure&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;their&#39;</span>, <span class="s1">&#39;contents&#39;</span>, <span class="s1">&#39;.&#39;</span>, <span class="s1">&#39;IBS&#39;</span>, <span class="s1">&#39;is&#39;</span>, <span class="s1">&#39;a&#39;</span>, <span class="s1">&#39;thesis&#39;</span>, <span class="s1">&#39;about&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;nature&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;relations&#39;</span>, <span class="s1">&#39;that&#39;</span>, <span class="s1">&#39;connect&#39;</span>, <span class="s1">&#39;cognitive&#39;</span>, <span class="s1">&#39;representations&#39;</span>, <span class="s1">&#39;and&#39;</span>, <span class="s1">&#39;their&#39;</span>, <span class="s1">&#39;parts&#39;</span>, <span class="s1">&#39;to&#39;</span>, <span class="s1">&#39;their&#39;</span>, <span class="s1">&#39;contents&#39;</span>, <span class="s1">&#39;-LRB-&#39;</span>, <span class="s1">&#39;semantic&#39;</span>, <span class="s1">&#39;relations&#39;</span>, <span class="s1">&#39;-RRB-&#39;</span>, <span class="s1">&#39;.&#39;</span>, <span class="s1">&#39;It&#39;</span>, <span class="s1">&#39;holds&#39;</span>, <span class="s1">&#39;that&#39;</span>, <span class="s1">&#39;these&#39;</span>, <span class="s1">&#39;relations&#39;</span>, <span class="s1">&#39;supervene&#39;</span>, <span class="s1">&#39;solely&#39;</span>, <span class="s1">&#39;on&#39;</span>, <span class="s1">&#39;relations&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;kind&#39;</span>, <span class="s1">&#39;that&#39;</span>, <span class="s1">&#39;support&#39;</span>, <span class="s1">&#39;information&#39;</span>, <span class="s1">&#39;content&#39;</span>, <span class="s1">&#39;,&#39;</span>, <span class="s1">&#39;perhaps&#39;</span>, <span class="s1">&#39;with&#39;</span>, <span class="s1">&#39;some&#39;</span>, <span class="s1">&#39;help&#39;</span>, <span class="s1">&#39;from&#39;</span>, <span class="s1">&#39;logical&#39;</span>, <span class="s1">&#39;principles&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;combination&#39;</span>, <span class="s1">&#39;.&#39;</span>, <span class="s1">&#39;Atomism&#39;</span>, <span class="s1">&#39;is&#39;</span>, <span class="s1">&#39;a&#39;</span>, <span class="s1">&#39;thesis&#39;</span>, <span class="s1">&#39;about&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;nature&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;content&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;simple&#39;</span>, <span class="s1">&#39;symbols&#39;</span>, <span class="s1">&#39;.&#39;</span>, <span class="s1">&#39;It&#39;</span>, <span class="s1">&#39;holds&#39;</span>, <span class="s1">&#39;that&#39;</span>, <span class="s1">&#39;each&#39;</span>, <span class="s1">&#39;substantive&#39;</span>, <span class="s1">&#39;simple&#39;</span>, <span class="s1">&#39;symbol&#39;</span>, <span class="s1">&#39;possesses&#39;</span>, <span class="s1">&#39;its&#39;</span>, <span class="s1">&#39;content&#39;</span>, <span class="s1">&#39;independently&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;all&#39;</span>, <span class="s1">&#39;other&#39;</span>, <span class="s1">&#39;symbols&#39;</span>, <span class="s1">&#39;in&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;representational&#39;</span>, <span class="s1">&#39;system&#39;</span>, <span class="s1">&#39;.&#39;</span>, <span class="s1">&#39;I&#39;</span>, <span class="s1">&#39;argue&#39;</span>, <span class="s1">&#39;that&#39;</span>, <span class="s1">&#39;Dretske&#39;</span>, <span class="s2">&quot;&#39;s&quot;</span>, <span class="s1">&#39;and&#39;</span>, <span class="s1">&#39;Fodor&#39;</span>, <span class="s2">&quot;&#39;s&quot;</span>, <span class="s1">&#39;theories&#39;</span>, <span class="s1">&#39;are&#39;</span>, <span class="s1">&#39;false&#39;</span>, <span class="s1">&#39;and&#39;</span>, <span class="s1">&#39;that&#39;</span>, <span class="s1">&#39;their&#39;</span>, <span class="s1">&#39;falsehood&#39;</span>, <span class="s1">&#39;results&#39;</span>, <span class="s1">&#39;from&#39;</span>, <span class="s1">&#39;a&#39;</span>, <span class="s1">&#39;conflict&#39;</span>, <span class="s1">&#39;IBS&#39;</span>, <span class="s1">&#39;and&#39;</span>, <span class="s1">&#39;Atomism&#39;</span>, <span class="s1">&#39;,&#39;</span>, <span class="s1">&#39;on&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;one&#39;</span>, <span class="s1">&#39;hand&#39;</span>, <span class="s1">&#39;,&#39;</span>, <span class="s1">&#39;and&#39;</span>, <span class="s1">&#39;LOT&#39;</span>, <span class="s1">&#39;,&#39;</span>, <span class="s1">&#39;on&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;other&#39;</span><span class="o">]</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>Doc BIO Tags:  <span class="o">[</span><span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;B&#39;</span>, <span class="s1">&#39;I&#39;</span>, <span class="s1">&#39;I&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;B&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;B&#39;</span>, <span class="s1">&#39;I&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;B&#39;</span>, <span class="s1">&#39;I&#39;</span>, <span class="s1">&#39;I&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;B&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;B&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;B&#39;</span>, <span class="s1">&#39;I&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;B&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;B&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;B&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;B&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;B&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span>, <span class="s1">&#39;O&#39;</span><span class="o">]</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>...
+</code></pre></div>
+<p>You can also load specific splits of the dataset, for example: just the <code>train</code> and <code>test</code> splits</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">inspec_data_ke</span><span class="o">.</span><span class="n">splits</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span><span class="p">]</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">inspec_data_ke</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">inspec_data_ke</span><span class="o">.</span><span class="n">train</span><span class="p">)</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">inspec_data_ke</span><span class="o">.</span><span class="n">test</span><span class="p">)</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="nb">print</span><span class="p">(</span><span class="n">inspec_data_ke</span><span class="o">.</span><span class="n">validation</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Dataset<span class="o">({</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    features: <span class="o">[</span><span class="s1">&#39;id&#39;</span>, <span class="s1">&#39;document&#39;</span>, <span class="s1">&#39;doc_bio_tags&#39;</span><span class="o">]</span>,
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    num_rows: <span class="m">1000</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="o">})</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>Dataset<span class="o">({</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    features: <span class="o">[</span><span class="s1">&#39;id&#39;</span>, <span class="s1">&#39;document&#39;</span>, <span class="s1">&#39;doc_bio_tags&#39;</span><span class="o">]</span>,
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    num_rows: <span class="m">500</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="o">})</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>None
+</code></pre></div></p>
+<p><a href="./#publicly-available-datasets">See below</a> for a full list of publicly available datasets. 
+In order to know more about the task of keyphrase extraction and the format of the dataset
+feel free to look at  <a href="../../tutorials/identifying-keyphrases-from-text/#keyphrase-extraction">A Tutorial on Identifying Keyphrases from Text</a>.</p>
+<h3 id="load-publicly-available-data-from-huggingface-hub-for-keyphrase-generation">Load publicly available data from Huggingface Hub for keyphrase generation</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span> <span class="nn">transformerkp.data.dataset_loaders</span> <span class="kn">import</span> <span class="n">Inspec</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">inspec_data_kg</span> <span class="o">=</span> <span class="n">Inspec</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;generation&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">inspec_data_kg</span><span class="o">.</span><span class="n">train</span><span class="p">)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">inspec_data_kg</span><span class="o">.</span><span class="n">test</span><span class="p">)</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="nb">print</span><span class="p">(</span><span class="n">inspec_data_kg</span><span class="o">.</span><span class="n">validation</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">Dataset</span><span class="p">({</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">features</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;document&#39;</span><span class="p">,</span> <span class="s1">&#39;extractive_keyphrases&#39;</span><span class="p">,</span> <span class="s1">&#39;abstractive_keyphrases&#39;</span><span class="p">],</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">num_rows</span><span class="p">:</span> <span class="mi">1000</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="p">})</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">Dataset</span><span class="p">({</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">features</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;document&#39;</span><span class="p">,</span> <span class="s1">&#39;extractive_keyphrases&#39;</span><span class="p">,</span> <span class="s1">&#39;abstractive_keyphrases&#39;</span><span class="p">],</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="n">num_rows</span><span class="p">:</span> <span class="mi">500</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="p">})</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="n">Dataset</span><span class="p">({</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="n">features</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;document&#39;</span><span class="p">,</span> <span class="s1">&#39;extractive_keyphrases&#39;</span><span class="p">,</span> <span class="s1">&#39;abstractive_keyphrases&#39;</span><span class="p">],</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>    <span class="n">num_rows</span><span class="p">:</span> <span class="mi">500</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="p">})</span>
+</code></pre></div></p>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># iterate over the dataset</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">for</span> <span class="n">entries</span> <span class="ow">in</span> <span class="n">inspec_data_kg</span><span class="o">.</span><span class="n">train</span><span class="p">:</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Document: &quot;</span><span class="p">,</span> <span class="n">entries</span><span class="p">[</span><span class="s2">&quot;document&quot;</span><span class="p">])</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Present Keyphrases: &quot;</span><span class="p">,</span> <span class="n">entries</span><span class="p">[</span><span class="s2">&quot;extractive_keyphrases&quot;</span><span class="p">])</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Abstractive Keyphrases: &quot;</span><span class="p">,</span> <span class="n">entries</span><span class="p">[</span><span class="s2">&quot;abstractive_keyphrases&quot;</span><span class="p">])</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">----</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<strong>Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>Document:  <span class="o">[</span><span class="s1">&#39;A&#39;</span>, <span class="s1">&#39;conflict&#39;</span>, <span class="s1">&#39;between&#39;</span>, <span class="s1">&#39;language&#39;</span>, <span class="s1">&#39;and&#39;</span>, <span class="s1">&#39;atomistic&#39;</span>, <span class="s1">&#39;information&#39;</span>, <span class="s1">&#39;Fred&#39;</span>, <span class="s1">&#39;Dretske&#39;</span>, <span class="s1">&#39;and&#39;</span>, <span class="s1">&#39;Jerry&#39;</span>, <span class="s1">&#39;Fodor&#39;</span>, <span class="s1">&#39;are&#39;</span>, <span class="s1">&#39;responsible&#39;</span>, <span class="s1">&#39;for&#39;</span>, <span class="s1">&#39;popularizing&#39;</span>, <span class="s1">&#39;three&#39;</span>, <span class="s1">&#39;well-known&#39;</span>, <span class="s1">&#39;theses&#39;</span>, <span class="s1">&#39;in&#39;</span>, <span class="s1">&#39;contemporary&#39;</span>, <span class="s1">&#39;philosophy&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;mind&#39;</span>, <span class="s1">&#39;:&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;thesis&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;Information-Based&#39;</span>, <span class="s1">&#39;Semantics&#39;</span>, <span class="s1">&#39;-LRB-&#39;</span>, <span class="s1">&#39;IBS&#39;</span>, <span class="s1">&#39;-RRB-&#39;</span>, <span class="s1">&#39;,&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;thesis&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;Content&#39;</span>, <span class="s1">&#39;Atomism&#39;</span>, <span class="s1">&#39;-LRB-&#39;</span>, <span class="s1">&#39;Atomism&#39;</span>, <span class="s1">&#39;-RRB-&#39;</span>, <span class="s1">&#39;and&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;thesis&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;Language&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;Thought&#39;</span>, <span class="s1">&#39;-LRB-&#39;</span>, <span class="s1">&#39;LOT&#39;</span>, <span class="s1">&#39;-RRB-&#39;</span>, <span class="s1">&#39;.&#39;</span>, <span class="s1">&#39;LOT&#39;</span>, <span class="s1">&#39;concerns&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;semantically&#39;</span>, <span class="s1">&#39;relevant&#39;</span>, <span class="s1">&#39;structure&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;representations&#39;</span>, <span class="s1">&#39;involved&#39;</span>, <span class="s1">&#39;in&#39;</span>, <span class="s1">&#39;cognitive&#39;</span>, <span class="s1">&#39;states&#39;</span>, <span class="s1">&#39;such&#39;</span>, <span class="s1">&#39;as&#39;</span>, <span class="s1">&#39;beliefs&#39;</span>, <span class="s1">&#39;and&#39;</span>, <span class="s1">&#39;desires&#39;</span>, <span class="s1">&#39;.&#39;</span>, <span class="s1">&#39;It&#39;</span>, <span class="s1">&#39;maintains&#39;</span>, <span class="s1">&#39;that&#39;</span>, <span class="s1">&#39;all&#39;</span>, <span class="s1">&#39;such&#39;</span>, <span class="s1">&#39;representations&#39;</span>, <span class="s1">&#39;must&#39;</span>, <span class="s1">&#39;have&#39;</span>, <span class="s1">&#39;syntactic&#39;</span>, <span class="s1">&#39;structures&#39;</span>, <span class="s1">&#39;mirroring&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;structure&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;their&#39;</span>, <span class="s1">&#39;contents&#39;</span>, <span class="s1">&#39;.&#39;</span>, <span class="s1">&#39;IBS&#39;</span>, <span class="s1">&#39;is&#39;</span>, <span class="s1">&#39;a&#39;</span>, <span class="s1">&#39;thesis&#39;</span>, <span class="s1">&#39;about&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;nature&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;relations&#39;</span>, <span class="s1">&#39;that&#39;</span>, <span class="s1">&#39;connect&#39;</span>, <span class="s1">&#39;cognitive&#39;</span>, <span class="s1">&#39;representations&#39;</span>, <span class="s1">&#39;and&#39;</span>, <span class="s1">&#39;their&#39;</span>, <span class="s1">&#39;parts&#39;</span>, <span class="s1">&#39;to&#39;</span>, <span class="s1">&#39;their&#39;</span>, <span class="s1">&#39;contents&#39;</span>, <span class="s1">&#39;-LRB-&#39;</span>, <span class="s1">&#39;semantic&#39;</span>, <span class="s1">&#39;relations&#39;</span>, <span class="s1">&#39;-RRB-&#39;</span>, <span class="s1">&#39;.&#39;</span>, <span class="s1">&#39;It&#39;</span>, <span class="s1">&#39;holds&#39;</span>, <span class="s1">&#39;that&#39;</span>, <span class="s1">&#39;these&#39;</span>, <span class="s1">&#39;relations&#39;</span>, <span class="s1">&#39;supervene&#39;</span>, <span class="s1">&#39;solely&#39;</span>, <span class="s1">&#39;on&#39;</span>, <span class="s1">&#39;relations&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;kind&#39;</span>, <span class="s1">&#39;that&#39;</span>, <span class="s1">&#39;support&#39;</span>, <span class="s1">&#39;information&#39;</span>, <span class="s1">&#39;content&#39;</span>, <span class="s1">&#39;,&#39;</span>, <span class="s1">&#39;perhaps&#39;</span>, <span class="s1">&#39;with&#39;</span>, <span class="s1">&#39;some&#39;</span>, <span class="s1">&#39;help&#39;</span>, <span class="s1">&#39;from&#39;</span>, <span class="s1">&#39;logical&#39;</span>, <span class="s1">&#39;principles&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;combination&#39;</span>, <span class="s1">&#39;.&#39;</span>, <span class="s1">&#39;Atomism&#39;</span>, <span class="s1">&#39;is&#39;</span>, <span class="s1">&#39;a&#39;</span>, <span class="s1">&#39;thesis&#39;</span>, <span class="s1">&#39;about&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;nature&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;content&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;simple&#39;</span>, <span class="s1">&#39;symbols&#39;</span>, <span class="s1">&#39;.&#39;</span>, <span class="s1">&#39;It&#39;</span>, <span class="s1">&#39;holds&#39;</span>, <span class="s1">&#39;that&#39;</span>, <span class="s1">&#39;each&#39;</span>, <span class="s1">&#39;substantive&#39;</span>, <span class="s1">&#39;simple&#39;</span>, <span class="s1">&#39;symbol&#39;</span>, <span class="s1">&#39;possesses&#39;</span>, <span class="s1">&#39;its&#39;</span>, <span class="s1">&#39;content&#39;</span>, <span class="s1">&#39;independently&#39;</span>, <span class="s1">&#39;of&#39;</span>, <span class="s1">&#39;all&#39;</span>, <span class="s1">&#39;other&#39;</span>, <span class="s1">&#39;symbols&#39;</span>, <span class="s1">&#39;in&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;representational&#39;</span>, <span class="s1">&#39;system&#39;</span>, <span class="s1">&#39;.&#39;</span>, <span class="s1">&#39;I&#39;</span>, <span class="s1">&#39;argue&#39;</span>, <span class="s1">&#39;that&#39;</span>, <span class="s1">&#39;Dretske&#39;</span>, <span class="s2">&quot;&#39;s&quot;</span>, <span class="s1">&#39;and&#39;</span>, <span class="s1">&#39;Fodor&#39;</span>, <span class="s2">&quot;&#39;s&quot;</span>, <span class="s1">&#39;theories&#39;</span>, <span class="s1">&#39;are&#39;</span>, <span class="s1">&#39;false&#39;</span>, <span class="s1">&#39;and&#39;</span>, <span class="s1">&#39;that&#39;</span>, <span class="s1">&#39;their&#39;</span>, <span class="s1">&#39;falsehood&#39;</span>, <span class="s1">&#39;results&#39;</span>, <span class="s1">&#39;from&#39;</span>, <span class="s1">&#39;a&#39;</span>, <span class="s1">&#39;conflict&#39;</span>, <span class="s1">&#39;IBS&#39;</span>, <span class="s1">&#39;and&#39;</span>, <span class="s1">&#39;Atomism&#39;</span>, <span class="s1">&#39;,&#39;</span>, <span class="s1">&#39;on&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;one&#39;</span>, <span class="s1">&#39;hand&#39;</span>, <span class="s1">&#39;,&#39;</span>, <span class="s1">&#39;and&#39;</span>, <span class="s1">&#39;LOT&#39;</span>, <span class="s1">&#39;,&#39;</span>, <span class="s1">&#39;on&#39;</span>, <span class="s1">&#39;the&#39;</span>, <span class="s1">&#39;other&#39;</span><span class="o">]</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>Present Keyphrases:  <span class="o">[</span><span class="s1">&#39;philosophy of mind&#39;</span>, <span class="s1">&#39;content atomism&#39;</span>, <span class="s1">&#39;ibs&#39;</span>, <span class="s1">&#39;language of thought&#39;</span>, <span class="s1">&#39;lot&#39;</span>, <span class="s1">&#39;cognitive states&#39;</span>, <span class="s1">&#39;beliefs&#39;</span>, <span class="s1">&#39;desires&#39;</span><span class="o">]</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>Abstractive Keyphrases:  <span class="o">[</span><span class="s1">&#39;information-based semantics&#39;</span><span class="o">]</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>...
+</code></pre></div></p>
+<p><a href="./#publicly-available-datasets">See below</a> for a full list of publicly available datasets. 
+In order to know more about the task of keyphrase generation and the format of the dataset
+feel free to look at  <a href="../../tutorials/identifying-keyphrases-from-text/#keyphrase-generation">A Tutorial on Identifying Keyphrases from Text</a>.</p>
+<h3 id="load-your-own-dataset-for-keyphrase-extraction">Load your own dataset for keyphrase extraction</h3>
+<p>One can also load custom dataset for keyphrase extraction. It is expected that the dataset will have the
+<code>document</code> and <code>doc_bio_tags</code> columns. Since, we treat <a href="https://link.springer.com/chapter/10.1007/978-3-030-45442-5_41">keyphrase extraction as a sequence tagging task</a>
+we expect the availability of the input document with tokens tagged with the <a href="https://en.wikipedia.org/wiki/Inside%E2%80%93outside%E2%80%93beginning_(tagging)">B-I-O scheme</a>. The <code>document</code> field of the dataset
+contains the whitespace tokenized document and the  <code>doc_bio_tags</code> column of the dataset
+contains their corresponding tags in the <a href="https://en.wikipedia.org/wiki/Inside%E2%80%93outside%E2%80%93beginning_(tagging)">B-I-O scheme</a>. </p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">ke_dataset</span> <span class="o">=</span> <span class="n">KeyphraseExtractionDataset</span><span class="p">(</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="n">train_file</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{path_to_train_data_file}</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="n">validation_file</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{path_to_validation_data_file}</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="n">test_file</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{path_to_test_data_file}</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+</code></pre></div>
+<p>You can also mention the specific splits to be loaded</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">ke_dataset</span> <span class="o">=</span> <span class="n">KeyphraseExtractionDataset</span><span class="p">(</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="n">train_file</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{path_to_train_data_file}</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="n">validation_file</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{path_to_validation_data_file}</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">test_file</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{path_to_test_data_file}</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">splits</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span><span class="p">]</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+</code></pre></div>
+<p>At this moment, only <code>json</code> and <code>csv</code> formats are allowed for custom datasets.
+Look at the <code>json</code> and <code>csv</code> samples provided in the <code>examples/data/keyphrase/sample_data</code>.
+In order to know more about the task of keyphrase extraction and the format of the dataset
+feel free to look at  <a href="../../tutorials/identifying-keyphrases-from-text/#keyphrase-extraction">A Tutorial on Identifying Keyphrases from Text</a>.</p>
+<h3 id="load-your-own-dataset-for-keyphrase-generation">Load your own dataset for keyphrase generation</h3>
+<p>One can also load custom dataset for keyphrase generation. It is expected that the dataset will have the
+<code>document</code> and at-least one of <code>extractive_keyphrases</code> or <code>abstractive_keyphrases</code> or <code>keyphrases</code> columns.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">kg_dataset</span> <span class="o">=</span> <span class="n">KeyphraseGenerationDataset</span><span class="p">(</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>    <span class="n">train_file</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{path_to_train_data_file}</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>    <span class="n">validation_file</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{path_to_validation_data_file}</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>    <span class="n">test_file</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{path_to_test_data_file}</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+</code></pre></div>
+<p>You can also mention the specific splits to be loaded</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">kg_dataset</span> <span class="o">=</span> <span class="n">KeyphraseGenerationDataset</span><span class="p">(</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>    <span class="n">train_file</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{path_to_train_data_file}</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>    <span class="n">validation_file</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{path_to_validation_data_file}</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    <span class="n">test_file</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{path_to_test_data_file}</span><span class="s2">&quot;</span><span class="p">,</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>    <span class="n">splits</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span><span class="p">]</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+</code></pre></div>
+<p>At this moment, only <code>json</code> and <code>csv</code> formats are allowed for custom datasets.
+Look at the <code>json</code> and <code>csv</code> samples provided in the <code>examples/data/keyphrase/sample_data</code>.</p>
+<p>In order to know more about the task of keyphrase generation and the format of the dataset
+feel free to look at  <a href="../../tutorials/identifying-keyphrases-from-text/#keyphrase-generation">A Tutorial on Identifying Keyphrases from Text</a>.</p>
+<h3 id="load-your-dataset-to-a-pandas-dataframe">Load your dataset to a pandas dataframe</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># load the dataset in pandas dataframe</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">df</span> <span class="o">=</span> <span class="n">inspec_data_ke</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+</code></pre></div>
+<p><strong>Output:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>     id                                           document                                       doc_bio_tags
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="m">0</span>  <span class="m">1949</span>  <span class="o">[</span>A, new, graphical, user, interface, <span class="k">for</span>, fast...  <span class="o">[</span>O, O, B, I, I, O, O, O, O, B, I, O, O, O, O, ...
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="m">1</span>  <span class="m">1945</span>  <span class="o">[</span>The, development, of, a, mobile, manipulator,...  <span class="o">[</span>O, O, O, O, B, I, B, I, O, B, I, I, O, B, I, ...
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="m">2</span>  <span class="m">1932</span>  <span class="o">[</span>Solution, of, the, safe, problem, on, -LRB-, ...  <span class="o">[</span>O, O, O, B, I, O, O, O, O, O, O, O, B, I, O, ...
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="m">3</span>  <span class="m">1943</span>  <span class="o">[</span>I-WAP, :, an, intelligent, WAP, site, managem...  <span class="o">[</span>O, O, O, B, I, I, I, I, O, O, O, O, O, O, O, ...
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="m">4</span>  <span class="m">1950</span>  <span class="o">[</span>General, solution, of, a, density, functional...  <span class="o">[</span>O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, ...
+</code></pre></div>
+<h2 id="saving">Saving</h2>
+<p>You can save the loaded data splits in any of the three formats <code>json</code>, <code>parquet</code> and <code>csv</code>.</p>
+<h3 id="saving-in-json-format">Saving in JSON Format</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># save the dataset in a json file</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">inspec_data_ke</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="s2">&quot;./inspec_test_ke.json&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="saving-in-parquet-format">Saving in Parquet format</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># save the dataset in parquet</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="n">inspec_data_ke</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">(</span><span class="s2">&quot;./inspec_test_ke.parquet&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="saving-in-csv-format">Saving in CSV format</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># save the dataset in csv</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="n">inspec_data_ke</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;./inspec_test_ke.csv&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="available-datasets">Available Datasets</h2>
+<h2 id="publicly-available-datasets">Publicly Available Datasets</h2>
+<p>We have made the following public datasets available through our library: </p>
+<table>
+<thead>
+<tr>
+<th align="center">Dataset</th>
+<th align="center">Huggingface Hub Link</th>
+<th align="center">Domain</th>
+<th align="left">How to Load</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><code>Inspec</code></td>
+<td align="center"><a href="https://huggingface.co/datasets/midas/inspec">Link</a></td>
+<td align="center">Science</td>
+<td align="left"><a href="../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.Inspec">Inspec(mode).load()</a></td>
+</tr>
+<tr>
+<td align="center"><code>KP20K</code></td>
+<td align="center"><a href="https://huggingface.co/datasets/midas/kp20k">Link</a></td>
+<td align="center">Science</td>
+<td align="left"><a href="../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.KP20K">KP20K(mode).load()</a></td>
+</tr>
+<tr>
+<td align="center"><code>KPTimes</code></td>
+<td align="center"><a href="https://huggingface.co/datasets/midas/kptimes">Link</a></td>
+<td align="center">News</td>
+<td align="left"><a href="../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.KPTimes">KPTimes(mode).load()</a></td>
+</tr>
+<tr>
+<td align="center"><code>OpenKP</code></td>
+<td align="center"><a href="https://huggingface.co/datasets/midas/openkp">Link</a></td>
+<td align="center">Web</td>
+<td align="left"><a href="../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.OpenKP">OpenKP(mode).load()</a></td>
+</tr>
+<tr>
+<td align="center"><code>KDD</code></td>
+<td align="center"><a href="https://huggingface.co/datasets/midas/kdd">Link</a></td>
+<td align="center">Science</td>
+<td align="left"><a href="../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.KDD">KDD(mode).load()</a></td>
+</tr>
+<tr>
+<td align="center"><code>WWW</code></td>
+<td align="center"><a href="https://huggingface.co/datasets/midas/www">Link</a></td>
+<td align="center">Science</td>
+<td align="left"><a href="../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.WWW">WWW(mode).load()</a></td>
+</tr>
+<tr>
+<td align="center"><code>Krapivin</code></td>
+<td align="center"><a href="https://huggingface.co/datasets/midas/krapivin">Link</a></td>
+<td align="center">Science</td>
+<td align="left"><a href="../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.Krapivin">Krapivin(mode).load()</a></td>
+</tr>
+<tr>
+<td align="center"><code>DUC-2001</code></td>
+<td align="center"><a href="https://huggingface.co/datasets/midas/inspec">Link</a></td>
+<td align="center">News</td>
+<td align="left"><a href="../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.DUC2001">DUC2001(mode).load()</a></td>
+</tr>
+<tr>
+<td align="center"><code>CSTR</code></td>
+<td align="center"><a href="https://huggingface.co/datasets/midas/cstr">Link</a></td>
+<td align="center">Science</td>
+<td align="left"><a href="../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.CSTR">CSTR(mode).load()</a></td>
+</tr>
+<tr>
+<td align="center"><code>PubMed</code></td>
+<td align="center"><a href="https://huggingface.co/datasets/midas/pubmed">Link</a></td>
+<td align="center">Science</td>
+<td align="left"><a href="../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.PubMed">PubMed(mode).load()</a></td>
+</tr>
+<tr>
+<td align="center"><code>Citeulike180</code></td>
+<td align="center"><a href="https://huggingface.co/datasets/midas/citeulike180">Link</a></td>
+<td align="center">Science</td>
+<td align="left"><a href="../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.Citeulike">Citeulike(mode).load()</a></td>
+</tr>
+<tr>
+<td align="center"><code>SemEval-2010</code></td>
+<td align="center"><a href="https://huggingface.co/datasets/midas/semeval2010">Link</a></td>
+<td align="center">Science</td>
+<td align="left"><a href="../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.SemEval2010">SemEval2010(mode).load()</a></td>
+</tr>
+<tr>
+<td align="center"><code>SemEval-2017</code></td>
+<td align="center"><a href="https://huggingface.co/datasets/midas/semeval2017">Link</a></td>
+<td align="center">Science</td>
+<td align="left"><a href="../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.SemEval2017">SemEval2017(mode).load()</a></td>
+</tr>
+<tr>
+<td align="center"><code>KPCrowd</code></td>
+<td align="center"><a href="https://huggingface.co/datasets/midas/kpcrowd">Link</a></td>
+<td align="center">News</td>
+<td align="left"><a href="../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.KPCrowd">KPCrowd(mode).load()</a></td>
+</tr>
+</tbody>
+</table>
+
+              
+            </article>
+            
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+    <nav class="md-footer__inner md-grid" aria-label="Footer" >
+      
+        
+        <a href="../../getting-started/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Getting started" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Getting started
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../../tutorials/identifying-keyphrases-from-text/" class="md-footer__link md-footer__link--next" aria-label="Next: Identifying Keyphrases from Text" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Identifying Keyphrases from Text
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.annotate"], "search": "../../assets/javascripts/workers/search.b97dbffb.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.6c7ad80a.min.js"></script>
+      
+    
+  </body>
+</html>
