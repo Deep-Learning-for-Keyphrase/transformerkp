@@ -61,7 +61,7 @@ A transformers based deep learning library for keyphrase identification from tex
 
     Feel free to browse through the reference
 
-    [:octicons-arrow-right-24: Refrerence](reference/data/keyphrase/dataset_loaders.md)
+    [:octicons-arrow-right-24: Refrerence](reference/data/dataset_loaders.md)
     
     <br>
     
