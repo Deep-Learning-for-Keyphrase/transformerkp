@@ -254,17 +254,17 @@ We have made the following public datasets available through our library:
 
 | Dataset      | Huggingface Hub Link                          | Domain | How to Load |
 | :---------: | :----------------------------------: | :-----------------: | :------------- |
-| `Inspec`       | [Link](https://huggingface.co/datasets/midas/inspec)  | Science | [Inspec(mode).load()](../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.Inspec) |
-| `KP20K`       | [Link](https://huggingface.co/datasets/midas/kp20k) | Science | [KP20K(mode).load()](../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.KP20K) |
-| `KPTimes`    | [Link](https://huggingface.co/datasets/midas/kptimes) | News | [KPTimes(mode).load()](../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.KPTimes) |
-| `OpenKP`    | [Link](https://huggingface.co/datasets/midas/openkp) | Web | [OpenKP(mode).load()](../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.OpenKP) |
-| `KDD`    | [Link](https://huggingface.co/datasets/midas/kdd) | Science | [KDD(mode).load()](../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.KDD) |
-| `WWW`    | [Link](https://huggingface.co/datasets/midas/www) | Science | [WWW(mode).load()](../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.WWW) |
-| `Krapivin`    | [Link](https://huggingface.co/datasets/midas/krapivin) | Science | [Krapivin(mode).load()](../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.Krapivin) |
-| `DUC-2001`    | [Link](https://huggingface.co/datasets/midas/inspec) | News | [DUC2001(mode).load()](../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.DUC2001) |
-| `CSTR`    | [Link](https://huggingface.co/datasets/midas/cstr) | Science | [CSTR(mode).load()](../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.CSTR) |
-| `PubMed`    | [Link](https://huggingface.co/datasets/midas/pubmed) | Science | [PubMed(mode).load()](../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.PubMed) |
-| `Citeulike180`    | [Link](https://huggingface.co/datasets/midas/citeulike180) | Science | [Citeulike(mode).load()](../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.Citeulike) |
-| `SemEval-2010`    | [Link](https://huggingface.co/datasets/midas/semeval2010) | Science | [SemEval2010(mode).load()](../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.SemEval2010) |
-| `SemEval-2017`    | [Link](https://huggingface.co/datasets/midas/semeval2017) | Science | [SemEval2017(mode).load()](../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.SemEval2017) |
-| `KPCrowd`    | [Link](https://huggingface.co/datasets/midas/kpcrowd) | News | [KPCrowd(mode).load()](../reference/data/keyphrase/dataset_loaders.md#src.transformerkp.data.dataset_loaders.KPCrowd) |
+| `Inspec`       | [Link](https://huggingface.co/datasets/midas/inspec)  | Science | [Inspec(mode).load()](../reference/data/dataset_loaders.md#src.transformerkp.data.dataset_loaders.Inspec) |
+| `KP20K`       | [Link](https://huggingface.co/datasets/midas/kp20k) | Science | [KP20K(mode).load()](../reference/data/dataset_loaders.md#src.transformerkp.data.dataset_loaders.KP20K) |
+| `KPTimes`    | [Link](https://huggingface.co/datasets/midas/kptimes) | News | [KPTimes(mode).load()](../reference/data/dataset_loaders.md#src.transformerkp.data.dataset_loaders.KPTimes) |
+| `OpenKP`    | [Link](https://huggingface.co/datasets/midas/openkp) | Web | [OpenKP(mode).load()](../reference/data/dataset_loaders.md#src.transformerkp.data.dataset_loaders.OpenKP) |
+| `KDD`    | [Link](https://huggingface.co/datasets/midas/kdd) | Science | [KDD(mode).load()](../reference/data/dataset_loaders.md#src.transformerkp.data.dataset_loaders.KDD) |
+| `WWW`    | [Link](https://huggingface.co/datasets/midas/www) | Science | [WWW(mode).load()](../reference/data/dataset_loaders.md#src.transformerkp.data.dataset_loaders.WWW) |
+| `Krapivin`    | [Link](https://huggingface.co/datasets/midas/krapivin) | Science | [Krapivin(mode).load()](../reference/data/dataset_loaders.md#src.transformerkp.data.dataset_loaders.Krapivin) |
+| `DUC-2001`    | [Link](https://huggingface.co/datasets/midas/inspec) | News | [DUC2001(mode).load()](../reference/data/dataset_loaders.md#src.transformerkp.data.dataset_loaders.DUC2001) |
+| `CSTR`    | [Link](https://huggingface.co/datasets/midas/cstr) | Science | [CSTR(mode).load()](../reference/data/dataset_loaders.md#src.transformerkp.data.dataset_loaders.CSTR) |
+| `PubMed`    | [Link](https://huggingface.co/datasets/midas/pubmed) | Science | [PubMed(mode).load()](../reference/data/dataset_loaders.md#src.transformerkp.data.dataset_loaders.PubMed) |
+| `Citeulike180`    | [Link](https://huggingface.co/datasets/midas/citeulike180) | Science | [Citeulike(mode).load()](../reference/data/dataset_loaders.md#src.transformerkp.data.dataset_loaders.Citeulike) |
+| `SemEval-2010`    | [Link](https://huggingface.co/datasets/midas/semeval2010) | Science | [SemEval2010(mode).load()](../reference/data/dataset_loaders.md#src.transformerkp.data.dataset_loaders.SemEval2010) |
+| `SemEval-2017`    | [Link](https://huggingface.co/datasets/midas/semeval2017) | Science | [SemEval2017(mode).load()](../reference/data/dataset_loaders.md#src.transformerkp.data.dataset_loaders.SemEval2017) |
+| `KPCrowd`    | [Link](https://huggingface.co/datasets/midas/kpcrowd) | News | [KPCrowd(mode).load()](../reference/data/dataset_loaders.md#src.transformerkp.data.dataset_loaders.KPCrowd) |
