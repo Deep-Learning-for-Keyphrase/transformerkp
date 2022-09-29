@@ -3,16 +3,16 @@ import pytest
 from transformerkp.data.extraction.ke_data_args import KEDataArguments
 from transformerkp.data.extraction.ke_data_args import InspecKEDataArguments
 from transformerkp.data.extraction.ke_data_args import NUSKEDataArguments
-from transformerkp.data.extraction.ke_data_loader import KEDataset
-from transformerkp.data.extraction.ke_data_loader import InspecKEDataset
-from transformerkp.data.extraction.ke_data_loader import NUSKEDataset
-from transformerkp.data.extraction.ke_data_loader import KDDKEDataset
-from transformerkp.data.extraction.ke_data_loader import KPCrowdKEDataset
-from transformerkp.data.extraction.ke_data_loader import SemEval2017KEDataset
-from transformerkp.data.extraction.ke_data_loader import SemEval2010KEDataset
-from transformerkp.data.extraction.ke_data_loader import DUC2001KEDataset
-from transformerkp.data.extraction.ke_data_loader import CSTRKEDataset
-from transformerkp.data.extraction.ke_data_loader import PubMedKEDataset
+from transformerkp.data.extraction.ke_datasets import KEDataset
+from transformerkp.data.extraction.ke_datasets import InspecKEDataset
+from transformerkp.data.extraction.ke_datasets import NUSKEDataset
+from transformerkp.data.extraction.ke_datasets import KDDKEDataset
+from transformerkp.data.extraction.ke_datasets import KPCrowdKEDataset
+from transformerkp.data.extraction.ke_datasets import SemEval2017KEDataset
+from transformerkp.data.extraction.ke_datasets import SemEval2010KEDataset
+from transformerkp.data.extraction.ke_datasets import DUC2001KEDataset
+from transformerkp.data.extraction.ke_datasets import CSTRKEDataset
+from transformerkp.data.extraction.ke_datasets import PubMedKEDataset
 from transformerkp.data.registry import KEDataLoaderRegistry
 from transformerkp.data.dataset_loaders import Inspec
 from transformerkp.data.dataset_loaders import NUS
@@ -36,7 +36,7 @@ def ke_data_arg_for_download_from_hf():
 
 
 @pytest.fixture
-def data_files():
+def json_files():
     class DataFile:
         train_file: str = "./resources/data/train.json"
         validation_file: str = "./resources/data/valid.json"
@@ -46,11 +46,21 @@ def data_files():
 
 
 @pytest.fixture
-def ke_data_arg_user(data_files):
+def csv_files():
+    class CSVData:
+        train_file: str = "./resources/data/train.csv"
+        validation_file: str = "./resources/data/valid.csv"
+        test_file: str = "./resources/data/test.csv"
+
+    return CSVData()
+
+
+@pytest.fixture
+def ke_data_arg_user(json_files):
     custom_data_args = KEDataArguments(
-        train_file=data_files.train_file,
-        validation_file=data_files.validation_file,
-        test_file=data_files.test_file,
+        train_file=json_files.train_file,
+        validation_file=json_files.validation_file,
+        test_file=json_files.test_file,
         cache_dir="cache",
         splits=["train", "validation", "test"]
     )
@@ -170,12 +180,10 @@ def test_inspec_ke_data_load(ke_data_registry):
 
     dataset = Inspec(mode="extraction")
     dataset.splits = ["train", "test"]
-    dataset.max_seq_length = 50
     dataset.load()
     assert dataset.train.num_rows == 1000
     assert dataset.validation is None
     assert dataset.test.num_rows == 500
-    assert dataset.max_seq_length == 50
 
 
 def test_nus_ke_data_load(ke_data_registry):
@@ -197,12 +205,10 @@ def test_nus_ke_data_load(ke_data_registry):
 
     dataset = NUS(mode="extraction")
     dataset.splits = ["train", "test"]
-    dataset.max_seq_length = 50
     dataset.load()
     assert dataset.train is None
     assert dataset.validation is None
     assert dataset.test.num_rows == 211
-    assert dataset.max_seq_length == 50
 
 
 def test_duc2001_ke_data_load(ke_data_registry):
@@ -223,12 +229,10 @@ def test_duc2001_ke_data_load(ke_data_registry):
 
     dataset = DUC2001(mode="extraction")
     dataset.splits = ["train", "test"]
-    dataset.max_seq_length = 50
     dataset.load()
     assert dataset.train is None
     assert dataset.validation is None
     assert dataset.test.num_rows == 308
-    assert dataset.max_seq_length == 50
 
 
 def test_kdd_ke_data_load(ke_data_registry):
@@ -249,12 +253,10 @@ def test_kdd_ke_data_load(ke_data_registry):
 
     dataset = KDD(mode="extraction")
     dataset.splits = ["train", "test"]
-    dataset.max_seq_length = 50
     dataset.load()
     assert dataset.train is None
     assert dataset.validation is None
     assert dataset.test.num_rows == 755
-    assert dataset.max_seq_length == 50
 
 
 def test_kpcrowd_ke_data_load(ke_data_registry):
@@ -275,12 +277,10 @@ def test_kpcrowd_ke_data_load(ke_data_registry):
     assert dataset.train.num_rows == 450
     dataset = KPCrowd(mode="extraction")
     dataset.splits = ["train", "test"]
-    dataset.max_seq_length = 50
     dataset.load()
     assert dataset.train is not None
     assert dataset.validation is None
     assert dataset.test.num_rows == 50
-    assert dataset.max_seq_length == 50
 
 
 def test_cstr_ke_data_load(ke_data_registry):
@@ -301,12 +301,10 @@ def test_cstr_ke_data_load(ke_data_registry):
     assert dataset.train.num_rows == 130
     dataset = CSTR(mode="extraction")
     dataset.splits = ["train", "test"]
-    dataset.max_seq_length = 50
     dataset.load()
     assert dataset.train is not None
     assert dataset.validation is None
     assert dataset.test.num_rows == 500
-    assert dataset.max_seq_length == 50
 
 
 def test_pubmed_ke_data_load(ke_data_registry):
@@ -327,12 +325,10 @@ def test_pubmed_ke_data_load(ke_data_registry):
     assert dataset.train is None
     dataset = PubMed(mode="extraction")
     dataset.splits = ["train", "test"]
-    dataset.max_seq_length = 50
     dataset.load()
     assert dataset.train is None
     assert dataset.validation is None
     assert dataset.test.num_rows == 1320
-    assert dataset.max_seq_length == 50
 
 
 def test_semeval2017_ke_data_load(ke_data_registry):
@@ -354,12 +350,10 @@ def test_semeval2017_ke_data_load(ke_data_registry):
     assert dataset.validation.num_rows == 50
     dataset = SemEval2017(mode="extraction")
     dataset.splits = ["train", "test"]
-    dataset.max_seq_length = 50
     dataset.load()
     assert dataset.train is not None
     assert dataset.validation is None
     assert dataset.test.num_rows == 100
-    assert dataset.max_seq_length == 50
 
 
 def test_semeval2010_ke_data_load(ke_data_registry):
@@ -380,19 +374,17 @@ def test_semeval2010_ke_data_load(ke_data_registry):
     assert dataset.train.num_rows == 144
     dataset = SemEval2010(mode="extraction")
     dataset.splits = ["train", "test"]
-    dataset.max_seq_length = 50
     dataset.load()
     assert dataset.train is not None
     assert dataset.validation is None
     assert dataset.test.num_rows == 100
-    assert dataset.max_seq_length == 50
 
 
-def test_custom_ke_dataset_load(data_files):
+def test_custom_ke_dataset_load(json_files, csv_files):
     ke_dataset = KeyphraseExtractionDataset(
-        train_file=data_files.train_file,
-        validation_file=data_files.validation_file,
-        test_file=data_files.test_file,
+        train_file=json_files.train_file,
+        validation_file=json_files.validation_file,
+        test_file=json_files.test_file,
     )
     ke_dataset.load()
     assert ke_dataset.train is not None
@@ -401,18 +393,25 @@ def test_custom_ke_dataset_load(data_files):
     assert ke_dataset.test.num_rows == 5
 
     ke_dataset = KeyphraseExtractionDataset(
-        train_file=data_files.train_file,
-        validation_file=data_files.validation_file,
-        test_file=data_files.test_file,
-        max_seq_length=10,
-        padding=False,
-        label_all_tokens=False,
+        train_file=json_files.train_file,
+        validation_file=json_files.validation_file,
+        test_file=json_files.test_file,
         splits=["train", "test"]
     ).load()
 
     assert ke_dataset.train is not None
     assert ke_dataset.test is not None
     assert ke_dataset.train.num_rows == 20
-    assert ke_dataset.max_seq_length == 10
-    assert ke_dataset.padding is False
+    assert ke_dataset.validation is None
+
+    ke_dataset = KeyphraseExtractionDataset(
+        train_file=csv_files.train_file,
+        validation_file=csv_files.validation_file,
+        test_file=csv_files.test_file,
+        splits=["train", "test"]
+    ).load()
+
+    assert ke_dataset.train is not None
+    assert ke_dataset.test is not None
+    assert ke_dataset.train.num_rows == 20
     assert ke_dataset.validation is None

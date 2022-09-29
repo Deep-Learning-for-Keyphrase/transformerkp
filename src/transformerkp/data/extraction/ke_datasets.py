@@ -1,3 +1,31 @@
+"""Module implementing classes for all the keyphrase extraction datasets.
+
+Classes:
+    * `KEDataset` - Class for Keyphrase Extraction datasets. All the specific implementations of the datasets used for keyphrase
+        extraction extends it.
+    * `InspecKEDataset` - Class for Inspec dataset from Huggingface Hub for keyphrase extraction <https://huggingface.co/datasets/midas/inspec>
+    * `NUSKEDataset` - Class for NUS dataset from Huggingface Hub for keyphrase extraction <https://huggingface.co/datasets/midas/nus>
+    * `KDDKEDataset` - Class for KDD dataset from Huggingface Hub for keyphrase extraction <https://huggingface.co/datasets/midas/kdd>
+    * `KrapivinKEDataset` - Class for Krapivin dataset from Huggingface Hub for keyphrase extraction <https://huggingface.co/datasets/midas/krapivin>
+    * `SemEval2010KEDataset` - Class for SemEval2010 dataset from Huggingface Hub for keyphrase extraction <https://huggingface.co/datasets/midas/semeval2010>
+    * `SemEval2017KEDataset` - Class for SemEval2017 dataset from Huggingface Hub for keyphrase extraction <https://huggingface.co/datasets/midas/semeval2017>
+    * `CSTRKEDataset` - Class for CSTR dataset from Huggingface Hub for keyphrase extraction <https://huggingface.co/datasets/midas/cstr>
+    * `CiteulikeKEDataset` - Class for Citeulike dataset from Huggingface Hub for keyphrase extraction <https://huggingface.co/datasets/midas/citeulike180>
+    * `DUC2001KEDataset` - Class for DUC2001 dataset from Huggingface Hub for keyphrase extraction <https://huggingface.co/datasets/midas/duc2001>
+    * `WWWKEDataset` - Class for WWW dataset from Huggingface Hub for keyphrase extraction <https://huggingface.co/datasets/midas/www>
+    * `KP20KKEDataset` - Class for KP20K dataset from Huggingface Hub for keyphrase extraction <https://huggingface.co/datasets/midas/kp20k>
+    * `OpenKPKEDataset` - Class for OpenKP dataset from Huggingface Hub for keyphrase extraction <https://huggingface.co/datasets/midas/openkp>
+    * `KPTimesKEDataset` - Class for KPTimes dataset from Huggingface Hub for keyphrase extraction <https://huggingface.co/datasets/midas/kptimes>
+    * `PubMedKEDataset` - Class for PubMed dataset from Huggingface Hub for keyphrase extraction <https://huggingface.co/datasets/midas/pubmed>
+    * `KPCrowdKEDataset` - Class for KPCrowd dataset from Huggingface Hub for keyphrase extraction <https://huggingface.co/datasets/midas/kpcrowd>
+
+
+TODO:
+    * Add the following datasets
+        * LDKP3K (small, medium, large) - <https://huggingface.co/datasets/midas/ldkp3k>
+        * LDKP10K (small, medium, large) - <https://huggingface.co/datasets/midas/ldkp10k>
+
+"""
 import logging
 import pathlib
 from collections import defaultdict
@@ -18,22 +46,25 @@ logger = logging.getLogger(__name__)
 
 
 class KEDataset(KPDataset):
+    """Class for Keyphrase Extraction datasets. All the specific implementations of the datasets used for keyphrase
+    extraction extends it.
+    """
+    def __init__(
+            self,
+            data_args: KEDataArguments
+    ) -> None:
+        """Init method for KEDataset
 
-    _label_to_id: Dict = {"B": 0, "I": 1, "O": 2}
-    _id_to_label: Dict = {0: "B", 1: "I", 2: "O"}
-    _num_labels: int = 3
+        Args:
+            data_args (KEDataArguments): Arguments to be considered while loading a keyphrase extraction dataset.
+        """
 
-    def __init__(self, data_args: KEDataArguments) -> None:
-        
         super().__init__()
         self.data_args: KEDataArguments = data_args
         self._train: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = None
         self._validation: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = None
         self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = None
         self._cache_dir = self.data_args.cache_dir
-        self._label_all_tokens = self.data_args.label_all_tokens
-        # TODO: needs to be removed. No need of handling it over here
-        # self._tokenizer: Any = AutoTokenizer.from_pretrained(data_args.tokenizer, use_fast=True, add_prefix_space=True)
         self._splits: Union[List[str], None] = list(set(get_dataset_split_names(
             self.data_args.dataset_name, "extraction")
         ).intersection(set(self.data_args.splits))) if self.data_args.dataset_name else self.data_args.splits
@@ -43,21 +74,8 @@ class KEDataset(KPDataset):
         self._label_column_name: Union[str, None] = (
             self.data_args.label_column_name if self.data_args is not None else None
         )
-        # TODO: will remove after proper verificiation
-        # if self._data_args.max_seq_length is None:
-        #     self._data_args.max_seq_length = self._tokenizer.model_max_length
-        # if self._data_args.max_seq_length > self._tokenizer.model_max_length:
-        #     logger.warning(
-        #         f"The max_seq_length passed ({self._data_args.max_seq_length}) is larger than the maximum length for the"
-        #         f"model ({self._tokenizer.model_max_length}). Using max_seq_length={self._tokenizer.model_max_length}."
-        #     )
-        self._max_seq_length: int = self.data_args.max_seq_length
-        self._padding: Union[str, bool] = (
-            "max_length" if self.data_args.padding else False
-        )
         self.__preprocess_function: Union[Callable, None] = self.data_args.preprocess_func
         self._datasets: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = None
-        # self.__load_ke_datasets()
 
     @property
     def train(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None]:
@@ -85,29 +103,6 @@ class KEDataset(KPDataset):
         return self._label_column_name
 
     @property
-    def label_to_id(self) -> Dict:
-        """Get the label to id mapping used for creating the dataset"""
-        return self._label_to_id
-
-    @property
-    def padding(self) -> Union[str, bool]:
-        """Get the padding strategy to be used for preprocessing the dataset for training and evaluation"""
-        return self._padding
-
-    @property
-    def label_all_tokens(self) -> bool:
-        """Get the label_all_tokens property which decides whether to put the label for one word on all
-        sub-words generated by that word or just on the one (in which case the other tokens will have a padding index).
-        This will be later used while preprocessing the dataset for training and evaluation
-        """
-        return self._label_all_tokens
-
-    @property
-    def max_seq_length(self) -> int:
-        """Gets the max sequence length to be used while preprocessing the dataset for training and evaluation"""
-        return self._max_seq_length
-
-    @property
     def splits(self) -> Union[List[str], None]:
         """Gets the data splits to be loaded"""
         return self._splits
@@ -116,11 +111,6 @@ class KEDataset(KPDataset):
     def cache_dir(self) -> str:
         """Gets the cache dir"""
         return self._cache_dir
-
-    @max_seq_length.setter
-    def max_seq_length(self, max_seq_length: int):
-        """Sets the max_seq_length"""
-        self._max_seq_length = max_seq_length
 
     @splits.setter
     def splits(self, splits: Union[List[str], None]):
@@ -133,20 +123,12 @@ class KEDataset(KPDataset):
         """Sets the cache dir"""
         self._cache_dir = cache_dir
 
-    @label_all_tokens.setter
-    def label_all_tokens(self, label_all_tokens: bool):
-        """Sets the label_all_tokens"""
-        self._label_all_tokens = label_all_tokens
-
-    @padding.setter
-    def padding(self, padding: Union[str, bool]):
-        """Sets the padding param"""
-        self._padding = padding
-
     def load(self) -> None:
         """Loads the training, validation and test splits from either an existing dataset from Huggingface hub or
         from provided files.
 
+        Returns:
+            None
         """
         if self.data_args.dataset_name is not None:
             logger.info(f"Only loading the following splits {self._splits}")
@@ -161,22 +143,25 @@ class KEDataset(KPDataset):
             # TODO: What if the train, validation and test files are in different formats - we cannot allow it.
             data_files = {}
             if self.data_args.train_file is not None:
+                self.__file_check(self.data_args.train_file)
                 data_files["train"] = self.data_args.train_file
                 extension = pathlib.Path(self.data_args.train_file).suffix.replace(".", "")
                 logger.info(f"Loaded training data from {self.data_args.train_file}")
             if self.data_args.validation_file is not None:
+                self.__file_check(self.data_args.validation_file)
                 data_files["validation"] = self.data_args.validation_file
                 extension = pathlib.Path(self.data_args.validation_file).suffix.replace(".", "")
                 logger.info(f"Loaded validation data from {self.data_args.validation_file}")
             if self.data_args.test_file is not None:
+                self.__file_check(self.data_args.test_file)
                 data_files["test"] = self.data_args.test_file
                 extension = pathlib.Path(self.data_args.test_file).suffix.replace(".", "")
                 logger.info(f"Loaded test data from {self.data_args.test_file}")
 
             logger.info(f"Only loading the following splits {self._splits}")
             self._datasets = load_dataset(
-                extension, 
-                data_files=data_files, 
+                extension,
+                data_files=data_files,
                 cache_dir=self.data_args.cache_dir,
                 split=self._splits,
             )
@@ -188,7 +173,7 @@ class KEDataset(KPDataset):
                     num_proc=self.data_args.preprocessing_num_workers,
                 )
                 logger.info(f"preprocessing done with the provided customized preprocessing function")
-        
+
         self._datasets = self.__create_dataset_dict_from_splits(self._datasets)
 
         if "train" in self._datasets:
@@ -221,20 +206,6 @@ class KEDataset(KPDataset):
         if self._label_column_name is not None:
             assert self._label_column_name in column_names
 
-        # TODO: to be done outside before training
-        # self._datasets = tokenize_and_align_labels(
-        #     datasets=self._datasets,
-        #     text_column_name=self._text_column_name,
-        #     label_column_name=self._label_column_name,
-        #     tokenizer=self._tokenizer,
-        #     label_to_id=self._label_to_id,
-        #     padding=self._padding,
-        #     label_all_tokens=self._data_args.label_all_tokens,
-        #     max_seq_len=self._max_seq_length,
-        #     num_workers=self._data_args.preprocessing_num_workers,
-        #     overwrite_cache=self._data_args.overwrite_cache,
-        # )
-
         if "train" in self._datasets:
             self._train = self._datasets["train"]
         if "validation" in self._datasets:
@@ -248,206 +219,294 @@ class KEDataset(KPDataset):
             data_dict[split_name] = data_split
         return DatasetDict(data_dict)
 
+    def __file_check(self, file_path):
+        extension = pathlib.Path(file_path).suffix
+        if extension not in [".json", ".csv"]:
+            raise TypeError("Only JSON and CSV files are supported.")
+
 
 class InspecKEDataset(KEDataset):
-    """Class for loading the Inspec dataset from Huggingface Hub"""
+    """Class for Inspec dataset from Huggingface Hub"""
+
     def __init__(
             self,
             data_args: ke_data_args.InspecKEDataArguments = ke_data_args.InspecKEDataArguments()
     ):
         """Init method for InspecKEDataset
+
+        Args:
+            data_args (InspecKEDataArguments): Arguments to be considered while loading Inspec dataset for keyphrase extraction.
         """
         super().__init__(data_args=data_args)
 
+
 class NUSKEDataset(KEDataset):
-    """Class for loading the NUS dataset from Huggingface Hub"""
+    """Class for NUS dataset from Huggingface Hub"""
+
     def __init__(
             self,
             data_args: ke_data_args.NUSKEDataArguments() = ke_data_args.NUSKEDataArguments()
     ):
         """Init method for NUSKEDataset
+
+        Args:
+            data_args (NUSKEDataArguments): Arguments to be considered while loading NUS dataset for keyphrase extraction.
         """
         super().__init__(data_args=data_args)
 
+
 class KDDKEDataset(KEDataset):
-    """Class for loading the KDD dataset from Huggingface Hub"""
+    """Class for KDD dataset from Huggingface Hub"""
+
     def __init__(
             self,
             data_args: ke_data_args.KDDKEDataArguments = ke_data_args.KDDKEDataArguments()
     ):
         """Init method for KDDKEDataset
+
+        Args:
+            data_args (KDDKEDataArguments): Arguments to be considered while loading KDD dataset for keyphrase extraction.
         """
         super().__init__(data_args=data_args)
 
+
 class KrapivinKEDataset(KEDataset):
-    """Class for loading the Krapivin dataset from Huggingface Hub"""
+    """Class for Krapivin dataset from Huggingface Hub"""
+
     def __init__(
             self,
             data_args: ke_data_args.KrapivinKEDataArguments = ke_data_args.KrapivinKEDataArguments()
     ):
         """Init method for KrapivinKEDataset
+
+        Args:
+            data_args (KrapivinKEDataArguments): Arguments to be considered while loading Krapivin dataset for keyphrase extraction.
         """
         super().__init__(data_args=data_args)
 
+
 class KP20KKEDataset(KEDataset):
-    """Class for loading the KP20K dataset from Huggingface Hub"""
+    """Class for KP20K dataset from Huggingface Hub"""
+
     def __init__(
             self,
             data_args: ke_data_args.KP20KKEDataArguments = ke_data_args.KP20KKEDataArguments()
     ):
         """Init method for KP20KKEDataset
+
+        Args:
+            data_args (KP20KKEDataArguments): Arguments to be considered while loading KP20K dataset for keyphrase extraction.
         """
         super().__init__(data_args=data_args)
 
+
 class WWWKEDataset(KEDataset):
-    """Class for loading the WWW dataset from Huggingface Hub"""
+    """Class for WWW dataset from Huggingface Hub"""
+
     def __init__(
             self,
             data_args: ke_data_args.WWWKEDataArguments = ke_data_args.WWWKEDataArguments()
     ):
         """Init method for WWWKEDataset
+
+        Args:
+            data_args (WWWKEDataArguments): Arguments to be considered while loading WWW dataset for keyphrase extraction.
         """
         super().__init__(data_args=data_args)
 
-class LDKP3KSmallKEDataset(KEDataset):
-    """Class for loading the LDKP3K small dataset from Huggingface Hub"""
-    def __init__(
-            self,
-            data_args: ke_data_args.LDKP3KSmallKEDataArguments = ke_data_args.LDKP3KSmallKEDataArguments()
-    ):
-        super().__init__(data_args=data_args)
-        print(data_args.dataset_config_name)
+# TODO: Need to implement the dataset classes for all the LDKP datasets
+# class LDKP3KSmallKEDataset(KEDataset):
+#     """Class for LDKP3K small dataset from Huggingface Hub"""
+#
+#     def __init__(
+#             self,
+#             data_args: ke_data_args.LDKP3KSmallKEDataArguments = ke_data_args.LDKP3KSmallKEDataArguments()
+#     ):
+#         super().__init__(data_args=data_args)
+#         print(data_args.dataset_config_name)
+#
+#
+# class LDKP3KMediumKEDataset(KEDataset):
+#     """Class for LDKP3K medium dataset from Huggingface Hub"""
+#
+#     def __init__(
+#             self,
+#             data_args: ke_data_args.LDKP3KMediumKEDataArguments = ke_data_args.LDKP3KMediumKEDataArguments()
+#     ):
+#         super().__init__(data_args=data_args)
+#
+#
+# class LDKP3KLargeKEDataset(KEDataset):
+#     """Class for LDKP3K large dataset from Huggingface Hub"""
+#
+#     def __init__(
+#             self,
+#             data_args: ke_data_args.LDKP3KLargeKEDataArguments = ke_data_args.LDKP3KLargeKEDataArguments()
+#     ):
+#         super().__init__(data_args=data_args)
+#
+#
+# class LDKP10KSmallKEDataset(KEDataset):
+#     """Class for LDKP10K small dataset from Huggingface Hub"""
+#
+#     def __init__(
+#             self,
+#             data_args: ke_data_args.LDKP10KSmallKEDataArguments = ke_data_args.LDKP10KSmallKEDataArguments()
+#     ):
+#         super().__init__(data_args=data_args)
+#
+#
+# class LDKP10KMediumKEDataset(KEDataset):
+#     """Class for LDKP10K medium dataset from Huggingface Hub"""
+#
+#     def __init__(
+#             self,
+#             data_args: ke_data_args.LDKP10KMediumKEDataArguments = ke_data_args.LDKP10KMediumKEDataArguments()
+#     ):
+#         super().__init__(data_args=data_args)
+#
+#
+# class LDKP10KLargeKEDataset(KEDataset):
+#     """Class for LDKP10K large dataset from Huggingface Hub"""
+#
+#     def __init__(
+#             self,
+#             data_args: ke_data_args.LDKP10KLargeKEDataArguments = ke_data_args.LDKP10KLargeKEDataArguments()
+#     ):
+#         super().__init__(data_args=data_args)
 
-class LDKP3KMediumKEDataset(KEDataset):
-    """Class for loading the LDKP3K medium dataset from Huggingface Hub"""
-    def __init__(
-            self,
-            data_args: ke_data_args.LDKP3KMediumKEDataArguments = ke_data_args.LDKP3KMediumKEDataArguments()
-    ):
-        super().__init__(data_args=data_args)
-
-class LDKP3KLargeKEDataset(KEDataset):
-    """Class for loading the LDKP3K large dataset from Huggingface Hub"""
-    def __init__(
-            self,
-            data_args: ke_data_args.LDKP3KLargeKEDataArguments = ke_data_args.LDKP3KLargeKEDataArguments()
-    ):
-        super().__init__(data_args=data_args)
-
-class LDKP10KSmallKEDataset(KEDataset):
-    """Class for loading the LDKP10K small dataset from Huggingface Hub"""
-    def __init__(
-            self,
-            data_args: ke_data_args.LDKP10KSmallKEDataArguments = ke_data_args.LDKP10KSmallKEDataArguments()
-    ):
-        super().__init__(data_args=data_args)
-
-class LDKP10KMediumKEDataset(KEDataset):
-    """Class for loading the LDKP10K medium dataset from Huggingface Hub"""
-    def __init__(
-            self,
-            data_args: ke_data_args.LDKP10KMediumKEDataArguments = ke_data_args.LDKP10KMediumKEDataArguments()
-    ):
-        super().__init__(data_args=data_args)
-
-class LDKP10KLargeKEDataset(KEDataset):
-    """Class for loading the LDKP10K large dataset from Huggingface Hub"""
-    def __init__(
-            self,
-            data_args: ke_data_args.LDKP10KLargeKEDataArguments = ke_data_args.LDKP10KLargeKEDataArguments()
-    ):
-        super().__init__(data_args=data_args)
 
 class KPTimesKEDataset(KEDataset):
-    """Class for loading the KPTimes dataset from Huggingface Hub"""
+    """Class for KPTimes dataset from Huggingface Hub"""
+
     def __init__(
             self,
             data_args: ke_data_args.KPTimesKEDataArguments = ke_data_args.KPTimesKEDataArguments()
     ):
         """Init method for KPTimesKEDataset
+
+        Args:
+            data_args (KPTimesKEDataArguments): Arguments to be considered while loading KPTimes dataset for keyphrase extraction.
         """
         super().__init__(data_args=data_args)
 
+
 class OpenKPKEDataset(KEDataset):
-    """Class for loading the OpenKP dataset from Huggingface Hub"""
+    """Class for OpenKP dataset from Huggingface Hub"""
+
     def __init__(
             self,
             data_args: ke_data_args.OpenKPKEDataArguments = ke_data_args.OpenKPKEDataArguments()
     ):
         """Init method for OpenKPKEDataset
+
+        Args:
+            data_args (OpenKPKEDataArguments): Arguments to be considered while loading OpenKP dataset for keyphrase extraction.
         """
         super().__init__(data_args=data_args)
 
+
 class SemEval2010KEDataset(KEDataset):
-    """Class for loading the SemEval 2010 dataset from Huggingface Hub"""
+    """Class for SemEval 2010 dataset from Huggingface Hub"""
+
     def __init__(
             self,
             data_args: ke_data_args.SemEval2010KEDataArguments = ke_data_args.SemEval2010KEDataArguments()
     ):
         """Init method for SemEval2010KEDataset
+
+        Args:
+            data_args (SemEval2010KEDataArguments): Arguments to be considered while loading SemEval2010 dataset for keyphrase extraction.
         """
         super().__init__(data_args=data_args)
 
+
 class SemEval2017KEDataset(KEDataset):
-    """Class for loading the SemEval 2017 dataset from Huggingface Hub"""
+    """Class for SemEval 2017 dataset from Huggingface Hub"""
+
     def __init__(
             self,
             data_args: ke_data_args.SemEval2017KEDataArguments = ke_data_args.SemEval2017KEDataArguments()
     ):
         """Init method for SemEval2017KEDataset
+
+        Args:
+            data_args (SemEval2017KEDataArguments): Arguments to be considered while loading SemEval2017 dataset for keyphrase extraction.
         """
         super().__init__(data_args=data_args)
 
+
 class KPCrowdKEDataset(KEDataset):
-    """Class for loading the KPCrowd dataset from Huggingface Hub"""
+    """Class for KPCrowd dataset from Huggingface Hub"""
+
     def __init__(
             self,
             data_args: ke_data_args.KPCrowdKEDataArguments = ke_data_args.KPCrowdKEDataArguments()
     ):
         """Init method for KPCrowdKEDataset
+
+        Args:
+            data_args (KPCrowdKEDataArguments): Arguments to be considered while loading KPCrowd dataset for keyphrase extraction.
         """
         super().__init__(data_args=data_args)
 
+
 class DUC2001KEDataset(KEDataset):
-    """Class for loading the DUC 2001 dataset from Huggingface Hub"""
+    """Class for DUC 2001 dataset from Huggingface Hub"""
+
     def __init__(
             self,
             data_args: ke_data_args.KPCrowdKEDataArguments = ke_data_args.DUC2001KEDataArguments()
     ):
         """Init method for DUC2001KEDataset
 
+        Args:
+            data_args (DUC2001KEDataArguments): Arguments to be considered while loading DUC2001 dataset for keyphrase extraction.
         """
         super().__init__(data_args=data_args)
 
+
 class CSTRKEDataset(KEDataset):
-    """Class for loading the CSTR dataset from Huggingface Hub"""
+    """Class for CSTR dataset from Huggingface Hub"""
+
     def __init__(
             self,
             data_args: ke_data_args.CSTRKEDataArguments = ke_data_args.CSTRKEDataArguments()
     ):
         """Init method for CSTRKEDataset
 
+        Args:
+            data_args (CSTRKEDataArguments): Arguments to be considered while loading CSTR dataset for keyphrase extraction.
         """
         super().__init__(data_args=data_args)
 
+
 class PubMedKEDataset(KEDataset):
-    """Class for loading the Pub Med dataset from Huggingface Hub"""
+    """Class for Pub Med dataset from Huggingface Hub"""
+
     def __init__(
             self,
             data_args: ke_data_args.PubMedKEDataArguments = ke_data_args.PubMedKEDataArguments()
     ):
         """Init method for PubMedKEDataset
 
+        Args:
+            data_args (PubMedKEDataArguments): Arguments to be considered while loading PubMed dataset for keyphrase extraction.
         """
         super().__init__(data_args=data_args)
 
+
 class CiteulikeKEDataset(KEDataset):
-    """Class for loading the Citeulike dataset from Huggingface Hub"""
+    """Class for Citeulike dataset from Huggingface Hub"""
+
     def __init__(
             self,
             data_args: ke_data_args.CiteulikeKEDataArguments = ke_data_args.CiteulikeKEDataArguments()
     ):
         """Init method for CiteulikeKEDataset
+
+        Args:
+            data_args (CiteulikeKEDataArguments): Arguments to be considered while loading Citeulike dataset for keyphrase extraction.
         """
         super().__init__(data_args=data_args)
 

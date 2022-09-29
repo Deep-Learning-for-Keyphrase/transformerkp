@@ -2,7 +2,9 @@
 
 The module contains the following functions:
 
-- `tokenize_text(txt, tokenizer, padding, max_seq_len)` - Returns tokenized text with its input_ids, attention_masks and special_token_masks
+    * `tokenize_text` - Returns tokenized text with its input_ids, attention_masks and special_token_masks
+    * `tokenize_and_align_labels` -
+    * `process_data_for_keyphrase_generation` -
 """
 from transformers import AutoTokenizer
 from typing import Union, Any, Dict, List
