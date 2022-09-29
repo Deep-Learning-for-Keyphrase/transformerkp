@@ -1,3 +1,29 @@
+"""Module containing the arguments for loading different datasets for keyphrase generation
+
+Classes:
+    * `KGDataArguments` - Argument Class for keyphrase generation datasets. All the specific implementations of the datasets used for keyphrase
+        extraction extends it.
+    * `InspecKGDataset` - Argument Class for Inspec dataset from Huggingface Hub for keyphrase generation <https://huggingface.co/datasets/midas/inspec>
+    * `NUSKGDataset` - Argument Class for NUS dataset from Huggingface Hub for keyphrase generation <https://huggingface.co/datasets/midas/nus>
+    * `KDDKGDataset` - Argument Class for KDD dataset from Huggingface Hub for keyphrase generation <https://huggingface.co/datasets/midas/kdd>
+    * `KrapivinKGDataset` - Argument Class for Krapivin dataset from Huggingface Hub for keyphrase generation <https://huggingface.co/datasets/midas/krapivin>
+    * `SemEval2010KGDataset` - Argument Class for SemEval2010 dataset from Huggingface Hub for keyphrase generation <https://huggingface.co/datasets/midas/semeval2010>
+    * `SemEval2017KGDataset` - Argument Class for SemEval2017 dataset from Huggingface Hub for keyphrase generation <https://huggingface.co/datasets/midas/semeval2017>
+    * `CSTRKGDataset` - Argument Class for CSTR dataset from Huggingface Hub for keyphrase generation <https://huggingface.co/datasets/midas/cstr>
+    * `CiteulikeKGDataset` - Argument Class for Citeulike dataset from Huggingface Hub for keyphrase generation <https://huggingface.co/datasets/midas/citeulike180>
+    * `DUC2001KGDataset` - Argument Class for DUC2001 dataset from Huggingface Hub for keyphrase generation <https://huggingface.co/datasets/midas/duc2001>
+    * `WWWKGDataset` - Argument Class for WWW dataset from Huggingface Hub for keyphrase generation <https://huggingface.co/datasets/midas/www>
+    * `KP20KKGDataset` - Argument Class for KP20K dataset from Huggingface Hub for keyphrase generation <https://huggingface.co/datasets/midas/kp20k>
+    * `OpenKPKGDataset` - Argument Class for OpenKP dataset from Huggingface Hub for keyphrase generation <https://huggingface.co/datasets/midas/openkp>
+    * `KPTimesKGDataset` - Argument Class for KPTimes dataset from Huggingface Hub for keyphrase generation <https://huggingface.co/datasets/midas/kptimes>
+    * `PubMedKGDataset` - Argument Class for PubMed dataset from Huggingface Hub for keyphrase generation <https://huggingface.co/datasets/midas/pubmed>
+    * `KPCrowdKGDataset` - Argument Class for KPCrowd dataset from Huggingface Hub for keyphrase generation <https://huggingface.co/datasets/midas/kpcrowd>
+
+TODO:
+    * Add the following dataset arguments
+        * LDKP3K (small, medium, large) - <https://huggingface.co/datasets/midas/ldkp3k>
+        * LDKP10K (small, medium, large) - <https://huggingface.co/datasets/midas/ldkp10k>
+"""
 from dataclasses import dataclass, field
 from typing import Optional, Callable, List, Union
 
@@ -20,37 +46,14 @@ class KGDataArguments(KPDataArguments):
         default="generation",
         metadata={
             "help": "(Optional) The configuration name of the dataset to use via the "
-            "Huggingface data library (https://github.com/huggingface/datasets)."
+            "Huggingface data library <https://github.com/huggingface/datasets>."
         },
     )
-    keyphrases_column_name: Optional[str] = field(
-        default=None,
+    label_column_name: Optional[str] = field(
+        default="extractive_keyphrases",
         metadata={
-            "help": "The name of the column in the dataset containing the keyphrases (for keyphrase generation)."
-        },
-    )
-    max_keyphrases_length: Optional[int] = field(
-        default=30,
-        metadata={
-            "help": "The maximum length of output keyphrases that can be generated. This is needed because the start "
-            "and end predictions are not conditioned on one another."
-        },
-    )
-    val_max_keyphrases_length: Optional[int] = field(
-        default=None,
-        metadata={
-            "help": "The maximum total sequence length for validation target text after tokenization. Sequences longer "
-            "than this will be truncated, sequences shorter will be padded. Will default to `max_keyphrases_length`."
-            "This argument is also used to override the ``max_length`` param of ``model.generate``, which is used "
-            "during ``evaluate`` and ``predict``."
-        },
-    )
-    padding: Union[str, bool] = field(
-        default="max_length",
-        metadata={
-            "help": "Whether to pad all samples to `max_seq_length`. "
-            "If False, will pad the samples dynamically when batching to the maximum length in the batch (which can "
-            "be faster on GPU but will be slower on TPU)."
+            "help": "(Optional) Name of the column name containing the BIO labels required for keyphrase extraction."
+                    "or the list of keyphrases required for keyphrase generation"
         },
     )
     max_train_samples: Optional[int] = field(
@@ -72,56 +75,6 @@ class KGDataArguments(KPDataArguments):
         metadata={
             "help": "For debugging purposes or quicker training, truncate the number of prediction examples to this "
             "value if set."
-        },
-    )
-    doc_stride: int = field(
-        default=128,
-        metadata={
-            "help": "When splitting up a long document into chunks, how much stride to take between chunks."
-        },
-    )
-    n_best_size: int = field(
-        default=20,
-        metadata={
-            "help": "The total number of n-best predictions to generate when looking for an answer."
-        },
-    )
-    num_beams: Optional[int] = field(
-        default=5,
-        metadata={
-            "help": "Number of beams to use for evaluation. This argument will be passed to ``model.generate``, "
-            "which is used during ``evaluate`` and ``predict``."
-        },
-    )
-    ignore_pad_token_for_loss: bool = field(
-        default=True,
-        metadata={
-            "help": "Whether to ignore the tokens corresponding to padded labels in the loss computation or not."
-        },
-    )
-    keyphrase_sep_token: str = field(
-        default="[KP_SEP]",
-        metadata={
-            "help": "token which will seprate multiple keyphrases during genration"
-        },
-    )
-    task_type: str = field(
-        default="one2many",
-        metadata={
-            "help": "one2many or one2one. one2many if all keyphrase needs to be generatted"
-        },
-    )
-    present_keyphrase_only: bool = field(
-        default=False,
-        metadata={
-            "help": "setting this to true will consider the present keyphrase in the text only"
-        },
-    )
-    cat_sequence: bool = field(
-        default=False,
-        metadata={
-            "help": "True if you want to concatenate the keyphrases in the order they appear. "
-                    "Abstractive keyphrases will be appended in the last with random/alphabetical ordering"
         },
     )
 
@@ -154,8 +107,8 @@ class KGDataArguments(KPDataArguments):
                     "csv",
                     "json",
                 ], "`test_file` should be a csv or a json file."
-        if self.val_max_keyphrases_length is None:
-            self.val_max_keyphrases_length = self.max_keyphrases_length
+        # if self.val_max_keyphrases_length is None:
+        #     self.val_max_keyphrases_length = self.max_keyphrases_length
 
 @dataclass
 class HFKGDataArguments(KGDataArguments):
@@ -171,13 +124,13 @@ class HFKGDataArguments(KGDataArguments):
 @dataclass
 class InspecKGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    inspec corpus to be downloaded from - https://huggingface.co/datasets/midas/inspec
+    inspec corpus to be downloaded from - <https://huggingface.co/datasets/midas/inspec>
     """
     dataset_name: Optional[str] = field(
         default="midas/inspec",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
 
@@ -185,13 +138,13 @@ class InspecKGDataArguments(HFKGDataArguments):
 @dataclass
 class KP20KKGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    KP20K corpus to be downloaded from - https://huggingface.co/datasets/midas/kp20k
+    KP20K corpus to be downloaded from - <https://huggingface.co/datasets/midas/kp20k>
     """
     dataset_name: Optional[str] = field(
         default="midas/kp20k",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
 
@@ -199,13 +152,13 @@ class KP20KKGDataArguments(HFKGDataArguments):
 @dataclass
 class NUSKGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    NUS corpus to be downloaded from - https://huggingface.co/datasets/midas/nus
+    NUS corpus to be downloaded from - <https://huggingface.co/datasets/midas/nus>
     """
     dataset_name: Optional[str] = field(
         default="midas/nus",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
 
@@ -221,13 +174,13 @@ class NUSKGDataArguments(HFKGDataArguments):
 @dataclass
 class SemEval2017KGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    SemEval-2017 corpus to be downloaded from - https://huggingface.co/datasets/midas/semeval2017
+    SemEval-2017 corpus to be downloaded from - <https://huggingface.co/datasets/midas/semeval2017>
     """
     dataset_name: Optional[str] = field(
         default="midas/semeval2017",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
 
@@ -235,13 +188,13 @@ class SemEval2017KGDataArguments(HFKGDataArguments):
 @dataclass
 class SemEval2010KGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    SemEval-2010 corpus to be downloaded from - https://huggingface.co/datasets/midas/semeval2010
+    SemEval-2010 corpus to be downloaded from - <https://huggingface.co/datasets/midas/semeval2010>
     """
     dataset_name: Optional[str] = field(
         default="midas/semeval2010",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
 
@@ -257,13 +210,13 @@ class SemEval2010KGDataArguments(HFKGDataArguments):
 @dataclass
 class KPCrowdKGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    KPCrowd corpus to be downloaded from - https://huggingface.co/datasets/midas/kpcrowd
+    KPCrowd corpus to be downloaded from - <https://huggingface.co/datasets/midas/kpcrowd>
     """
     dataset_name: Optional[str] = field(
         default="midas/kpcrowd",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
 
@@ -279,13 +232,13 @@ class KPCrowdKGDataArguments(HFKGDataArguments):
 @dataclass
 class WWWKGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    WWW corpus to be downloaded from - https://huggingface.co/datasets/midas/www
+    WWW corpus to be downloaded from - <https://huggingface.co/datasets/midas/www>
     """
     dataset_name: Optional[str] = field(
         default="midas/www",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
 
@@ -301,13 +254,13 @@ class WWWKGDataArguments(HFKGDataArguments):
 @dataclass
 class CiteulikeKGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    CiteULike corpus to be downloaded from - https://huggingface.co/datasets/midas/citeulike
+    CiteULike corpus to be downloaded from - <https://huggingface.co/datasets/midas/citeulike>
     """
     dataset_name: Optional[str] = field(
         default="midas/citeulike",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
 
@@ -323,13 +276,13 @@ class CiteulikeKGDataArguments(HFKGDataArguments):
 @dataclass
 class DUC2001KGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    DUC-2001 corpus to be downloaded from - https://huggingface.co/datasets/midas/duc2001
+    DUC-2001 corpus to be downloaded from - <https://huggingface.co/datasets/midas/duc2001>
     """
     dataset_name: Optional[str] = field(
         default="midas/duc2001",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
 
@@ -345,13 +298,13 @@ class DUC2001KGDataArguments(HFKGDataArguments):
 @dataclass
 class KrapivinKGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    Krapivin corpus to be downloaded from - https://huggingface.co/datasets/midas/krapivin
+    Krapivin corpus to be downloaded from - <https://huggingface.co/datasets/midas/krapivin>
     """
     dataset_name: Optional[str] = field(
         default="midas/krapivin",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
 
@@ -367,13 +320,13 @@ class KrapivinKGDataArguments(HFKGDataArguments):
 @dataclass
 class OpenKPKGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    OpenKP corpus to be downloaded from - https://huggingface.co/datasets/midas/openkp
+    OpenKP corpus to be downloaded from - <https://huggingface.co/datasets/midas/openkp>
     """
     dataset_name: Optional[str] = field(
         default="midas/openkp",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
 
@@ -381,13 +334,13 @@ class OpenKPKGDataArguments(HFKGDataArguments):
 @dataclass
 class KDDKGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    KDD corpus to be downloaded from - https://huggingface.co/datasets/midas/kdd
+    KDD corpus to be downloaded from - <https://huggingface.co/datasets/midas/kdd>
     """
     dataset_name: Optional[str] = field(
         default="midas/kdd",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
 
@@ -403,13 +356,13 @@ class KDDKGDataArguments(HFKGDataArguments):
 @dataclass
 class CSTRKGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    CSTR corpus to be downloaded from - https://huggingface.co/datasets/midas/cstr
+    CSTR corpus to be downloaded from - <https://huggingface.co/datasets/midas/cstr>
     """
     dataset_name: Optional[str] = field(
         default="midas/cstr",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
 
@@ -425,13 +378,13 @@ class CSTRKGDataArguments(HFKGDataArguments):
 @dataclass
 class PubMedKGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    PubMed corpus to be downloaded from - https://huggingface.co/datasets/midas/pubmed
+    PubMed corpus to be downloaded from - <https://huggingface.co/datasets/midas/pubmed>
     """
     dataset_name: Optional[str] = field(
         default="midas/pubmed",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
 
@@ -447,13 +400,13 @@ class PubMedKGDataArguments(HFKGDataArguments):
 @dataclass
 class KPTimesKGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    KPTimes corpus to be downloaded from - https://huggingface.co/datasets/midas/kptimes
+    KPTimes corpus to be downloaded from - <https://huggingface.co/datasets/midas/kptimes>
     """
     dataset_name: Optional[str] = field(
         default="midas/kptimes",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
 
@@ -461,20 +414,20 @@ class KPTimesKGDataArguments(HFKGDataArguments):
 @dataclass
 class LDKP3KSmallKGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    LDKP3K small corpus to be downloaded from - https://huggingface.co/datasets/midas/ldkp3k
+    LDKP3K small corpus to be downloaded from - <https://huggingface.co/datasets/midas/ldkp3k>
     """
     dataset_name: Optional[str] = field(
         default="midas/ldkp3k",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
     dataset_config_name: Optional[str] = field(
         default="small",
         metadata={
             "help": "(Optional) The configuration name of the dataset to use via the "
-            "Huggingface data library (https://github.com/huggingface/datasets)."
+            "Huggingface data library <https://github.com/huggingface/datasets>."
         },
     )
 
@@ -482,20 +435,20 @@ class LDKP3KSmallKGDataArguments(HFKGDataArguments):
 @dataclass
 class LDKP3KMediumKGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    LDKP3K medium corpus to be downloaded from - https://huggingface.co/datasets/midas/ldkp3k
+    LDKP3K medium corpus to be downloaded from - <https://huggingface.co/datasets/midas/ldkp3k>
     """
     dataset_name: Optional[str] = field(
         default="midas/ldkp3k",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
     dataset_config_name: Optional[str] = field(
         default="medium",
         metadata={
             "help": "(Optional) The configuration name of the dataset to use via the "
-            "Huggingface data library (https://github.com/huggingface/datasets)."
+            "Huggingface data library <https://github.com/huggingface/datasets>."
         },
     )
 
@@ -503,20 +456,20 @@ class LDKP3KMediumKGDataArguments(HFKGDataArguments):
 @dataclass
 class LDKP3KLargeKGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    LDKP3K large corpus to be downloaded from - https://huggingface.co/datasets/midas/ldkp3k
+    LDKP3K large corpus to be downloaded from - <https://huggingface.co/datasets/midas/ldkp3k>
     """
     dataset_name: Optional[str] = field(
         default="midas/ldkp3k",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
     dataset_config_name: Optional[str] = field(
         default="large",
         metadata={
             "help": "(Optional) The configuration name of the dataset to use via the "
-            "Huggingface data library (https://github.com/huggingface/datasets)."
+            "Huggingface data library <https://github.com/huggingface/datasets>."
         },
     )
 
@@ -524,20 +477,20 @@ class LDKP3KLargeKGDataArguments(HFKGDataArguments):
 @dataclass
 class LDKP10KSmallKGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    LDKP10K small corpus to be downloaded from - https://huggingface.co/datasets/midas/ldkp10k
+    LDKP10K small corpus to be downloaded from - <https://huggingface.co/datasets/midas/ldkp10k>
     """
     dataset_name: Optional[str] = field(
         default="midas/ldkp10k",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
     dataset_config_name: Optional[str] = field(
         default="small",
         metadata={
             "help": "(Optional) The configuration name of the dataset to use via the "
-            "Huggingface data library (https://github.com/huggingface/datasets)."
+            "Huggingface data library <https://github.com/huggingface/datasets>."
         },
     )
 
@@ -545,20 +498,20 @@ class LDKP10KSmallKGDataArguments(HFKGDataArguments):
 @dataclass
 class LDKP10KMediumKGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    LDKP10K medium corpus to be downloaded from - https://huggingface.co/datasets/midas/ldkp10k
+    LDKP10K medium corpus to be downloaded from - <https://huggingface.co/datasets/midas/ldkp10k>
     """
     dataset_name: Optional[str] = field(
         default="midas/ldkp10k",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
     dataset_config_name: Optional[str] = field(
         default="medium",
         metadata={
             "help": "(Optional) The configuration name of the dataset to use via the "
-            "Huggingface data library (https://github.com/huggingface/datasets)."
+            "Huggingface data library <https://github.com/huggingface/datasets>."
         },
     )
 
@@ -566,20 +519,20 @@ class LDKP10KMediumKGDataArguments(HFKGDataArguments):
 @dataclass
 class LDKP10KLargeKGDataArguments(HFKGDataArguments):
     """Arguments for downloading and preprocessing training, validation and test data for keyphrase extraction for the
-    LDKP10K large corpus to be downloaded from - https://huggingface.co/datasets/midas/ldkp10k
+    LDKP10K large corpus to be downloaded from - <https://huggingface.co/datasets/midas/ldkp10k>
     """
     dataset_name: Optional[str] = field(
         default="midas/ldkp10k",
         metadata={
             "help": "(Optional) The name of the dataset to use (via the data library). The name of the dataset must"
-            "match to one of the available data in the Huggingface Hub (https://huggingface.co/datasets)."
+            "match to one of the available data in the Huggingface Hub <https://huggingface.co/datasets>."
         },
     )
     dataset_config_name: Optional[str] = field(
         default="large",
         metadata={
             "help": "(Optional) The configuration name of the dataset to use via the "
-            "Huggingface data library (https://github.com/huggingface/datasets)."
+            "Huggingface data library <https://github.com/huggingface/datasets>."
         },
     )
 

@@ -1,57 +1,93 @@
+"""Dataset registry module.
+
+This module contains classes and methods for registering a new dataset and retrieving it from the registry.
+The registry is mainly used by the Factory data loaders in `transformerkp.data.dataset_loader_factory`
+
+Classes:
+    * `KEDataLoaderRegistry` - registry for loading keyphrase extraction datasets
+        * methods:
+            * `register` - used for registring a new dataset to be loaded for keyphrase extraction
+            * `retrieve` - used for retrieving an already registered keyphrase extraction dataset
+
+    * `KGDataLoaderRegistry` - registry for loading keyphrase generation datasets
+        * methods:
+            * `register` - used for registring a new dataset to be loaded for keyphrase extraction
+            * `retrieve` - used for retrieving an already registered keyphrase extraction dataset
+
+TODO:
+    * Add the following datasets in the registry
+        * LDKP3K (small, medium, large)
+        * LDKP10K (small, medium, large)
+"""
 from typing import Dict
 from collections import defaultdict
 from dataclasses import fields
 
 from transformerkp.data.base import DataLoaderRegistry
 from transformerkp.data.base import KPDataset
-from transformerkp.data.extraction.ke_data_loader import KEDataset
-from transformerkp.data.extraction.ke_data_loader import InspecKEDataset
-from transformerkp.data.extraction.ke_data_loader import NUSKEDataset
-from transformerkp.data.extraction.ke_data_loader import SemEval2010KEDataset
-from transformerkp.data.extraction.ke_data_loader import SemEval2017KEDataset
-from transformerkp.data.extraction.ke_data_loader import KDDKEDataset
-from transformerkp.data.extraction.ke_data_loader import KP20KKEDataset
-from transformerkp.data.extraction.ke_data_loader import KPCrowdKEDataset
-from transformerkp.data.extraction.ke_data_loader import KPTimesKEDataset
-from transformerkp.data.extraction.ke_data_loader import OpenKPKEDataset
-from transformerkp.data.extraction.ke_data_loader import LDKP3KSmallKEDataset
-from transformerkp.data.extraction.ke_data_loader import LDKP3KMediumKEDataset
-from transformerkp.data.extraction.ke_data_loader import LDKP3KLargeKEDataset
-from transformerkp.data.extraction.ke_data_loader import LDKP10KSmallKEDataset
-from transformerkp.data.extraction.ke_data_loader import LDKP10KMediumKEDataset
-from transformerkp.data.extraction.ke_data_loader import LDKP10KLargeKEDataset
-from transformerkp.data.extraction.ke_data_loader import CSTRKEDataset
-from transformerkp.data.extraction.ke_data_loader import PubMedKEDataset
-from transformerkp.data.extraction.ke_data_loader import CiteulikeKEDataset
-from transformerkp.data.extraction.ke_data_loader import DUC2001KEDataset
-from transformerkp.data.extraction.ke_data_loader import WWWKEDataset
+from transformerkp.data.extraction.ke_datasets import KEDataset
+from transformerkp.data.extraction.ke_datasets import InspecKEDataset
+from transformerkp.data.extraction.ke_datasets import NUSKEDataset
+from transformerkp.data.extraction.ke_datasets import SemEval2010KEDataset
+from transformerkp.data.extraction.ke_datasets import SemEval2017KEDataset
+from transformerkp.data.extraction.ke_datasets import KDDKEDataset
+from transformerkp.data.extraction.ke_datasets import KP20KKEDataset
+from transformerkp.data.extraction.ke_datasets import KPCrowdKEDataset
+from transformerkp.data.extraction.ke_datasets import KPTimesKEDataset
+from transformerkp.data.extraction.ke_datasets import OpenKPKEDataset
+# from transformerkp.data.extraction.ke_datasets import LDKP3KSmallKEDataset
+# from transformerkp.data.extraction.ke_datasets import LDKP3KMediumKEDataset
+# from transformerkp.data.extraction.ke_datasets import LDKP3KLargeKEDataset
+# from transformerkp.data.extraction.ke_datasets import LDKP10KSmallKEDataset
+# from transformerkp.data.extraction.ke_datasets import LDKP10KMediumKEDataset
+# from transformerkp.data.extraction.ke_datasets import LDKP10KLargeKEDataset
+from transformerkp.data.extraction.ke_datasets import CSTRKEDataset
+from transformerkp.data.extraction.ke_datasets import PubMedKEDataset
+from transformerkp.data.extraction.ke_datasets import CiteulikeKEDataset
+from transformerkp.data.extraction.ke_datasets import DUC2001KEDataset
+from transformerkp.data.extraction.ke_datasets import WWWKEDataset
+from transformerkp.data.extraction.ke_datasets import KrapivinKEDataset
 from transformerkp.data.extraction.ke_data_args import KEDataArguments
-from transformerkp.data.generation.kg_data_loader import KGDataset
-from transformerkp.data.generation.kg_data_loader import InspecKGDataset
-from transformerkp.data.generation.kg_data_loader import NUSKGDataset
-from transformerkp.data.generation.kg_data_loader import SemEval2010KGDataset
-from transformerkp.data.generation.kg_data_loader import SemEval2017KGDataset
-from transformerkp.data.generation.kg_data_loader import KDDKGDataset
-from transformerkp.data.generation.kg_data_loader import KP20KKGDataset
-from transformerkp.data.generation.kg_data_loader import KPCrowdKGDataset
-from transformerkp.data.generation.kg_data_loader import KPTimesKGDataset
-from transformerkp.data.generation.kg_data_loader import OpenKPKGDataset
-from transformerkp.data.generation.kg_data_loader import LDKP3KSmallKGDataset
-from transformerkp.data.generation.kg_data_loader import LDKP3KMediumKGDataset
-from transformerkp.data.generation.kg_data_loader import LDKP3KLargeKGDataset
-from transformerkp.data.generation.kg_data_loader import LDKP10KSmallKGDataset
-from transformerkp.data.generation.kg_data_loader import LDKP10KMediumKGDataset
-from transformerkp.data.generation.kg_data_loader import LDKP10KLargeKGDataset
-from transformerkp.data.generation.kg_data_loader import CSTRKGDataset
-from transformerkp.data.generation.kg_data_loader import PubMedKGDataset
-from transformerkp.data.generation.kg_data_loader import CiteulikeKGDataset
-from transformerkp.data.generation.kg_data_loader import DUC2001KGDataset
-from transformerkp.data.generation.kg_data_loader import WWWKGDataset
+from transformerkp.data.generation.kg_datasets import KGDataset
+from transformerkp.data.generation.kg_datasets import InspecKGDataset
+from transformerkp.data.generation.kg_datasets import NUSKGDataset
+from transformerkp.data.generation.kg_datasets import SemEval2010KGDataset
+from transformerkp.data.generation.kg_datasets import SemEval2017KGDataset
+from transformerkp.data.generation.kg_datasets import KDDKGDataset
+from transformerkp.data.generation.kg_datasets import KP20KKGDataset
+from transformerkp.data.generation.kg_datasets import KPCrowdKGDataset
+from transformerkp.data.generation.kg_datasets import KPTimesKGDataset
+from transformerkp.data.generation.kg_datasets import OpenKPKGDataset
+# from transformerkp.data.generation.kg_datasets import LDKP3KSmallKGDataset
+# from transformerkp.data.generation.kg_datasets import LDKP3KMediumKGDataset
+# from transformerkp.data.generation.kg_datasets import LDKP3KLargeKGDataset
+# from transformerkp.data.generation.kg_datasets import LDKP10KSmallKGDataset
+# from transformerkp.data.generation.kg_datasets import LDKP10KMediumKGDataset
+# from transformerkp.data.generation.kg_datasets import LDKP10KLargeKGDataset
+from transformerkp.data.generation.kg_datasets import CSTRKGDataset
+from transformerkp.data.generation.kg_datasets import PubMedKGDataset
+from transformerkp.data.generation.kg_datasets import CiteulikeKGDataset
+from transformerkp.data.generation.kg_datasets import DUC2001KGDataset
+from transformerkp.data.generation.kg_datasets import WWWKGDataset
+from transformerkp.data.generation.kg_datasets import KrapivinKGDataset
 from transformerkp.data.generation.kg_data_args import KGDataArguments
 
 
 class KEDataLoaderRegistry(DataLoaderRegistry):
+    """Dataset loader registry for registering and loading keyphrase extraction datasets.
 
+    Examples:
+        >>> dataset_identifier = "nus"
+        >>> KEDataLoaderRegistry().register(dataset_identifier, NUSKEDataset)
+        >>> params = {"splits": ["test"]}
+        >>> ke_nus_dataset = KEDataLoaderRegistry().retrieve(dataset_identifier, params=params)
+        >>> print(ke_nus_dataset.test)
+        Dataset({
+            features: ['id', 'document', 'doc_bio_tags'],
+            num_rows: 211
+        })
+
+    """
     _ke_data_loader_registry: Dict = defaultdict(KEDataset)
     _ke_data_loader_registry["inspec"] = InspecKEDataset
     _ke_data_loader_registry["nus"] = NUSKEDataset
@@ -73,23 +109,25 @@ class KEDataLoaderRegistry(DataLoaderRegistry):
     _ke_data_loader_registry["www"] = WWWKEDataset
     _ke_data_loader_registry["kpcrowd"] = KPCrowdKEDataset
     _ke_data_loader_registry["openkp"] = OpenKPKEDataset
+    _ke_data_loader_registry["krapivin"] = KrapivinKEDataset
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def register(
             self,
             dataset_identifier: str,
-            data_loader: KEDataset
+            data_loader: KEDataset,
     ) -> None:
-        """
+        """Registers a new dataset with a new identifier mapped to its implemented data loader. Only to be used during
+        testing of a new dataset loader.
 
         Args:
-            dataset_identifier:
-            data_loader:
+            dataset_identifier (str): Identifier of the dataset to be loaded from the registry.
+            data_loader (KEDataset): Reference to a KEDataset class for the respective dataset being registered.
 
         Returns:
-
+            None
         """
         self._ke_data_loader_registry[dataset_identifier] = data_loader
 
@@ -98,34 +136,27 @@ class KEDataLoaderRegistry(DataLoaderRegistry):
             dataset_identifier: str,
             params: Dict = {},
     ) -> KEDataset:
-        """
+        """Retrieves the data loader for the specified data identifier. To be used by the data loading factories.
 
         Args:
-            dataset_identifier:
-            params:
+            dataset_identifier (str): Identifier of the dataset to be loaded from the registry.
 
         Returns:
+            KEDataset: an instance of a loaded KEDataset object
 
+        Raises:
+            KeyError: If the dataset identifier is not registered with the registry.
         """
         data_loader_ref: KEDataset = self._ke_data_loader_registry.get(dataset_identifier)
         data_loader = data_loader_ref()
         if data_loader:
             if params:
-                max_seq_length = params.get("max_seq_length")
-                if max_seq_length:
-                    data_loader.max_seq_length = max_seq_length
-                label_all_tokens = params.get("label_all_tokens")
-                if label_all_tokens:
-                    data_loader.label_all_tokens = label_all_tokens
                 cache_dir = params.get("cache_dir")
                 if cache_dir:
                     data_loader.cache_dir = cache_dir
                 splits = params.get("splits")
                 if splits:
                     data_loader.splits = splits
-                padding = params.get("padding")
-                if padding:
-                    data_loader.padding = padding
             data_loader.load()
 
             return data_loader
@@ -134,7 +165,19 @@ class KEDataLoaderRegistry(DataLoaderRegistry):
 
 
 class KGDataLoaderRegistry(DataLoaderRegistry):
+    """Dataset loader registry for registering and loading keyphrase extraction datasets.
 
+    Examples:
+        >>> dataset_identifier = "nus"
+        >>> KGDataLoaderRegistry().register(dataset_identifier, NUSKGDataset)
+        >>> params = {"splits": ["test"]}
+        >>> kg_nus_dataset = KGDataLoaderRegistry().retrieve(dataset_identifier, params=params)
+        >>> print(kg_nus_dataset.test)
+        Dataset({
+            features: ['id', 'document', 'extractive_keyphrases', 'abstractive_keyphrases'],
+            num_rows: 211
+        })
+    """
     _kg_data_loader_registry: Dict = defaultdict(KGDataset)
     _kg_data_loader_registry["inspec"] = InspecKGDataset
     _kg_data_loader_registry["nus"] = NUSKGDataset
@@ -156,23 +199,25 @@ class KGDataLoaderRegistry(DataLoaderRegistry):
     _kg_data_loader_registry["www"] = WWWKGDataset
     _kg_data_loader_registry["kpcrowd"] = KPCrowdKGDataset
     _kg_data_loader_registry["openkp"] = OpenKPKGDataset
+    _kg_data_loader_registry["krapivin"] = KrapivinKGDataset
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def register(
             self,
             dataset_identifier: str,
-            data_loader: KGDataset
+            data_loader: KGDataset,
     ) -> None:
-        """
+        """Registers a new dataset with a new identifier mapped to its implemented data loader. Only to be used during
+        testing of a new dataset loader.
 
         Args:
-            dataset_identifier:
-            data_loader:
+            dataset_identifier (str): Identifier of the dataset to be loaded from the registry.
+            data_loader (KGDataset): Reference to a KGDataset class for the respective dataset being registered.
 
         Returns:
-
+            None
         """
         self._kg_data_loader_registry[dataset_identifier] = data_loader
 
@@ -181,55 +226,27 @@ class KGDataLoaderRegistry(DataLoaderRegistry):
             dataset_identifier: str,
             params: Dict = {},
     ) -> KGDataset:
-        """
+        """Retrieves the data loader for the specified data identifier. To be used by the data loading factories.
 
         Args:
-            dataset_identifier:
-            params:
+            dataset_identifier (str): Identifier of the dataset to be loaded from the registry.
 
         Returns:
+            KGDataset: an instance of a loaded KGDataset object
 
+        Raises:
+            KeyError: If the dataset identifier is not registered with the registry.
         """
         data_loader_ref: KGDataset = self._kg_data_loader_registry.get(dataset_identifier)
         data_loader = data_loader_ref()
         if data_loader:
             if params:
-                max_keyphrases_length = params.get("max_keyphrases_length")
-                if max_keyphrases_length:
-                    data_loader.max_keyphrases_length = max_keyphrases_length
-                kp_sep_token = params.get("kp_sep_token")
-                if kp_sep_token:
-                    data_loader.kp_sep_token = kp_sep_token
                 cache_dir = params.get("cache_dir")
                 if cache_dir:
                     data_loader.cache_dir = cache_dir
                 splits = params.get("splits")
                 if splits:
                     data_loader.splits = splits
-                truncation = params.get("truncation")
-                if truncation:
-                    data_loader.truncation = truncation
-                padding = params.get("padding")
-                if padding:
-                    data_loader.padding = padding
-                doc_stride = params.get("doc_stride")
-                if doc_stride:
-                    data_loader.doc_stride = doc_stride
-                n_best_size = params.get("n_best_size")
-                if n_best_size:
-                    data_loader.n_best_size = n_best_size
-                num_beams = params.get("num_beams")
-                if num_beams:
-                    data_loader.num_beams = num_beams
-                ignore_pad_token_for_loss = params.get("ignore_pad_token_for_loss")
-                if ignore_pad_token_for_loss:
-                    data_loader.ignore_pad_token_for_loss = ignore_pad_token_for_loss
-                present_keyphrase_only = params.get("present_keyphrase_only")
-                if present_keyphrase_only:
-                    data_loader.present_keyphrase_only = present_keyphrase_only
-                cat_sequence = params.get("cat_sequence")
-                if cat_sequence:
-                    data_loader.cat_sequence = cat_sequence
             data_loader.load()
 
             return data_loader

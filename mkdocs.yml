@@ -2,20 +2,44 @@ site_name: transformerkp
 
 theme:
   name: material
+  features:
+    - content.code.annotate
 
 plugins:
   - mkdocstrings
 
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - md_in_html
+
+
+
 nav:
   - Welcome: index.md
   - Getting started: getting-started.md
-  - How-To Guides: how-to-guides.md
+  - How-To Guides:
+      - Datasets:
+          - Keyphrase Extraction and Generation Data: how-to-guides/keyphrase-data.md
+  - Tutorials:
+      - Identifying Keyphrases from Text: tutorials/identifying-keyphrases-from-text.md
   - Reference:
-    - transformerkp: 
+    - transformerkp:
       - data:
-        - args: reference/data/args.md
-        - base: reference/data/base.md
-        - extraction: reference/data/extraction.md
-        - generation: reference/data/generation.md
-        - preprocessing: reference/data/preprocessing.md
-  
+          - extraction:
+              - ke_data_args: reference/data/extraction/ke_data_args.md
+              - ke_datasets: reference/data/extraction/ke_datasets.md
+          - generation:
+              - kg_data_args: reference/data/generation/kg_data_args.md
+              - kg_datasets: reference/data/generation/kg_datasets.md
+          - base: reference/data/base.md
+          - dataset_loaders: reference/data/dataset_loaders.md
+          - dataset_loader_factory: reference/data/dataset_loader_factory.md
+          - registry: reference/data/registry.md

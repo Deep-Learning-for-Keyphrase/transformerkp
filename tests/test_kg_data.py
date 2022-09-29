@@ -3,16 +3,16 @@ import pytest
 from transformerkp.data.generation.kg_data_args import KGDataArguments
 from transformerkp.data.generation.kg_data_args import InspecKGDataArguments
 from transformerkp.data.generation.kg_data_args import NUSKGDataArguments
-from transformerkp.data.generation.kg_data_loader import KGDataset
-from transformerkp.data.generation.kg_data_loader import InspecKGDataset
-from transformerkp.data.generation.kg_data_loader import NUSKGDataset
-from transformerkp.data.generation.kg_data_loader import KDDKGDataset
-from transformerkp.data.generation.kg_data_loader import KPCrowdKGDataset
-from transformerkp.data.generation.kg_data_loader import SemEval2017KGDataset
-from transformerkp.data.generation.kg_data_loader import SemEval2010KGDataset
-from transformerkp.data.generation.kg_data_loader import DUC2001KGDataset
-from transformerkp.data.generation.kg_data_loader import CSTRKGDataset
-from transformerkp.data.generation.kg_data_loader import PubMedKGDataset
+from transformerkp.data.generation.kg_datasets import KGDataset
+from transformerkp.data.generation.kg_datasets import InspecKGDataset
+from transformerkp.data.generation.kg_datasets import NUSKGDataset
+from transformerkp.data.generation.kg_datasets import KDDKGDataset
+from transformerkp.data.generation.kg_datasets import KPCrowdKGDataset
+from transformerkp.data.generation.kg_datasets import SemEval2017KGDataset
+from transformerkp.data.generation.kg_datasets import SemEval2010KGDataset
+from transformerkp.data.generation.kg_datasets import DUC2001KGDataset
+from transformerkp.data.generation.kg_datasets import CSTRKGDataset
+from transformerkp.data.generation.kg_datasets import PubMedKGDataset
 from transformerkp.data.registry import KGDataLoaderRegistry
 from transformerkp.data.dataset_loaders import Inspec
 from transformerkp.data.dataset_loaders import NUS
@@ -36,21 +36,31 @@ def kg_data_arg_for_download_from_hf():
 
 
 @pytest.fixture
-def data_files():
-    class DataFile:
+def json_files():
+    class JsonData:
         train_file: str = "./resources/data/train.json"
         validation_file: str = "./resources/data/valid.json"
         test_file: str = "./resources/data/test.json"
 
-    return DataFile()
+    return JsonData()
 
 
 @pytest.fixture
-def kg_data_arg_user(data_files):
+def csv_files():
+    class CSVData:
+        train_file: str = "./resources/data/train.csv"
+        validation_file: str = "./resources/data/valid.csv"
+        test_file: str = "./resources/data/test.csv"
+
+    return CSVData()
+
+
+@pytest.fixture
+def kg_data_arg_user(json_files):
     custom_data_args = KGDataArguments(
-        train_file=data_files.train_file,
-        validation_file=data_files.validation_file,
-        test_file=data_files.test_file,
+        train_file=json_files.train_file,
+        validation_file=json_files.validation_file,
+        test_file=json_files.test_file,
         cache_dir="cache",
         splits=["train", "validation", "test"]
     )
@@ -169,15 +179,12 @@ def test_inspec_kg_data_load(kg_data_registry):
 
     dataset = Inspec(mode="generation")
     dataset.splits = ["train", "test"]
-    dataset.max_seq_length = 50
-    dataset.present_keyphrase_only = True
     dataset.load()
     assert dataset.train.num_rows == 1000
     assert dataset.validation is None
     assert dataset.test.num_rows == 500
-    assert dataset.max_seq_length == 50
-    assert len(dataset.train.features) == 3
-    assert len(dataset.test.features) == 3
+    assert len(dataset.train.features) == 4
+    assert len(dataset.test.features) == 4
 
 
 def test_nus_kg_data_load(kg_data_registry):
@@ -199,13 +206,10 @@ def test_nus_kg_data_load(kg_data_registry):
 
     dataset = NUS(mode="generation")
     dataset.splits = ["train", "test"]
-    dataset.max_seq_length = 50
-    dataset.present_keyphrase_only = True
     dataset.load()
     assert dataset.train is None
     assert dataset.test.num_rows == 211
-    assert dataset.max_seq_length == 50
-    assert len(dataset.test.features) == 3
+    assert len(dataset.test.features) == 4
 
 
 def test_duc2001_kg_data_load(kg_data_registry):
@@ -226,13 +230,10 @@ def test_duc2001_kg_data_load(kg_data_registry):
 
     dataset = DUC2001(mode="generation")
     dataset.splits = ["train", "test"]
-    dataset.max_seq_length = 50
-    dataset.present_keyphrase_only = True
     dataset.load()
     assert dataset.train is None
     assert dataset.test.num_rows == 308
-    assert dataset.max_seq_length == 50
-    assert len(dataset.test.features) == 3
+    assert len(dataset.test.features) == 4
 
 
 def test_kdd_kg_data_load(kg_data_registry):
@@ -253,13 +254,10 @@ def test_kdd_kg_data_load(kg_data_registry):
 
     dataset = KDD(mode="generation")
     dataset.splits = ["train", "test"]
-    dataset.max_seq_length = 50
-    dataset.present_keyphrase_only = True
     dataset.load()
     assert dataset.train is None
     assert dataset.test.num_rows == 755
-    assert dataset.max_seq_length == 50
-    assert len(dataset.test.features) == 3
+    assert len(dataset.test.features) == 4
 
 
 def test_kpcrowd_kg_data_load(kg_data_registry):
@@ -279,13 +277,10 @@ def test_kpcrowd_kg_data_load(kg_data_registry):
     assert dataset.test.num_rows == 50
     dataset = KPCrowd(mode="generation")
     dataset.splits = ["train", "test"]
-    dataset.max_seq_length = 50
-    dataset.present_keyphrase_only = True
     dataset.load()
     assert dataset.train is not None
     assert dataset.test.num_rows == 50
-    assert dataset.max_seq_length == 50
-    assert len(dataset.test.features) == 3
+    assert len(dataset.test.features) == 4
 
 
 def test_cstr_kg_data_load(kg_data_registry):
@@ -305,13 +300,10 @@ def test_cstr_kg_data_load(kg_data_registry):
     assert dataset.test.num_rows == 500
     dataset = CSTR(mode="generation")
     dataset.splits = ["train", "test"]
-    dataset.max_seq_length = 50
-    dataset.present_keyphrase_only = True
     dataset.load()
     assert dataset.train is not None
     assert dataset.test.num_rows == 500
-    assert dataset.max_seq_length == 50
-    assert len(dataset.test.features) == 3
+    assert len(dataset.test.features) == 4
 
 
 def test_pubmed_kg_data_load(kg_data_registry):
@@ -331,13 +323,10 @@ def test_pubmed_kg_data_load(kg_data_registry):
     assert dataset.test.num_rows == 1320
     dataset = PubMed(mode="generation")
     dataset.splits = ["train", "test"]
-    dataset.max_seq_length = 50
-    dataset.present_keyphrase_only = True
     dataset.load()
     assert dataset.train is None
     assert dataset.test.num_rows == 1320
-    assert dataset.max_seq_length == 50
-    assert len(dataset.test.features) == 3
+    assert len(dataset.test.features) == 4
 
 
 def test_semeval2017_kg_data_load(kg_data_registry):
@@ -359,13 +348,10 @@ def test_semeval2017_kg_data_load(kg_data_registry):
     assert dataset.validation.num_rows == 50
     dataset = SemEval2017(mode="generation")
     dataset.splits = ["train", "test"]
-    dataset.max_seq_length = 50
-    dataset.present_keyphrase_only = True
     dataset.load()
     assert dataset.train is not None
     assert dataset.test.num_rows == 100
-    assert dataset.max_seq_length == 50
-    assert len(dataset.test.features) == 3
+    assert len(dataset.test.features) == 4
 
 
 def test_semeval2010_kg_data_load(kg_data_registry):
@@ -385,21 +371,17 @@ def test_semeval2010_kg_data_load(kg_data_registry):
     assert dataset.test.num_rows == 100
     dataset = SemEval2010(mode="generation")
     dataset.splits = ["train", "test"]
-    dataset.max_seq_length = 50
-    dataset.present_keyphrase_only = True
     dataset.load()
     assert dataset.train is not None
     assert dataset.test.num_rows == 100
-    assert dataset.max_seq_length == 50
-    assert len(dataset.test.features) == 3
+    assert len(dataset.test.features) == 4
 
 
-def test_custom_kg_data_load(data_files):
+def test_custom_kg_data_load(json_files, csv_files):
     kg_dataset = KeyphraseGenerationDataset(
-        train_file=data_files.train_file,
-        validation_file=data_files.validation_file,
-        test_file=data_files.test_file,
-        present_keyphrase_only=True
+        train_file=json_files.train_file,
+        validation_file=json_files.validation_file,
+        test_file=json_files.test_file,
     )
     kg_dataset.load()
     assert kg_dataset.train is not None
@@ -408,17 +390,23 @@ def test_custom_kg_data_load(data_files):
     assert kg_dataset.test.num_rows == 5
 
     kg_dataset = KeyphraseGenerationDataset(
-        train_file=data_files.train_file,
-        validation_file=data_files.validation_file,
-        test_file=data_files.test_file,
-        max_seq_length=10,
-        padding=False,
+        train_file=json_files.train_file,
+        validation_file=json_files.validation_file,
+        test_file=json_files.test_file,
         splits=["train", "test"],
-        present_keyphrase_only=True,
     ).load()
     assert kg_dataset.train is not None
     assert kg_dataset.test is not None
     assert kg_dataset.train.num_rows == 20
-    assert kg_dataset.max_seq_length == 10
-    assert kg_dataset.padding == False
+    assert kg_dataset.validation is None
+
+    kg_dataset = KeyphraseGenerationDataset(
+        train_file=csv_files.train_file,
+        validation_file=csv_files.validation_file,
+        test_file=csv_files.test_file,
+        splits=["train", "test"],
+    ).load()
+    assert kg_dataset.train is not None
+    assert kg_dataset.test is not None
+    assert kg_dataset.train.num_rows == 20
     assert kg_dataset.validation is None
