@@ -66,7 +66,7 @@ class KEDataset(KPDataset):
         self._test: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset, None] = None
         self._cache_dir = self.data_args.cache_dir
         self._splits: Union[List[str], None] = list(set(get_dataset_split_names(
-            self.data_args.dataset_name, "extraction")
+            self.data_args.dataset_name, self.data_args.dataset_config_name)
         ).intersection(set(self.data_args.splits))) if self.data_args.dataset_name else self.data_args.splits
         self._text_column_name: Union[str, None] = (
             self.data_args.text_column_name if self.data_args is not None else None
@@ -115,8 +115,18 @@ class KEDataset(KPDataset):
     @splits.setter
     def splits(self, splits: Union[List[str], None]):
         """Sets the data splits to be loaded"""
-        self._splits = list(set(get_dataset_split_names(
-            self.data_args.dataset_name, "extraction")).intersection(set(splits)))
+        self._splits = list(
+            set(
+                get_dataset_split_names(
+                    self.data_args.dataset_name,
+                    self.data_args.dataset_config_name,
+                )
+            ).intersection(
+                set(
+                    splits
+                )
+            )
+        )
 
     @cache_dir.setter
     def cache_dir(self, cache_dir: str):
@@ -143,17 +153,17 @@ class KEDataset(KPDataset):
             # TODO: What if the train, validation and test files are in different formats - we cannot allow it.
             data_files = {}
             if self.data_args.train_file is not None:
-                self.__file_check(self.data_args.train_file)
+                self._file_check(self.data_args.train_file)
                 data_files["train"] = self.data_args.train_file
                 extension = pathlib.Path(self.data_args.train_file).suffix.replace(".", "")
                 logger.info(f"Loaded training data from {self.data_args.train_file}")
             if self.data_args.validation_file is not None:
-                self.__file_check(self.data_args.validation_file)
+                self._file_check(self.data_args.validation_file)
                 data_files["validation"] = self.data_args.validation_file
                 extension = pathlib.Path(self.data_args.validation_file).suffix.replace(".", "")
                 logger.info(f"Loaded validation data from {self.data_args.validation_file}")
             if self.data_args.test_file is not None:
-                self.__file_check(self.data_args.test_file)
+                self._file_check(self.data_args.test_file)
                 data_files["test"] = self.data_args.test_file
                 extension = pathlib.Path(self.data_args.test_file).suffix.replace(".", "")
                 logger.info(f"Loaded test data from {self.data_args.test_file}")
@@ -174,7 +184,7 @@ class KEDataset(KPDataset):
                 )
                 logger.info(f"preprocessing done with the provided customized preprocessing function")
 
-        self._datasets = self.__create_dataset_dict_from_splits(self._datasets)
+        self._datasets = self._create_dataset_dict_from_splits(self._datasets)
 
         if "train" in self._datasets:
             column_names = self._datasets["train"].column_names
@@ -213,13 +223,13 @@ class KEDataset(KPDataset):
         if "test" in self._datasets:
             self._test = self._datasets["test"]
 
-    def __create_dataset_dict_from_splits(self, data_splits: List[Dataset]) -> DatasetDict:
+    def _create_dataset_dict_from_splits(self, data_splits: List[Dataset]) -> DatasetDict:
         data_dict = defaultdict(Dataset)
         for split_name, data_split in zip(self._splits, data_splits):
             data_dict[split_name] = data_split
         return DatasetDict(data_dict)
 
-    def __file_check(self, file_path):
+    def _file_check(self, file_path):
         extension = pathlib.Path(file_path).suffix
         if extension not in [".json", ".csv"]:
             raise TypeError("Only JSON and CSV files are supported.")
@@ -314,66 +324,169 @@ class WWWKEDataset(KEDataset):
         """
         super().__init__(data_args=data_args)
 
-# TODO: Need to implement the dataset classes for all the LDKP datasets
-# class LDKP3KSmallKEDataset(KEDataset):
-#     """Class for LDKP3K small dataset from Huggingface Hub"""
-#
-#     def __init__(
-#             self,
-#             data_args: ke_data_args.LDKP3KSmallKEDataArguments = ke_data_args.LDKP3KSmallKEDataArguments()
-#     ):
-#         super().__init__(data_args=data_args)
-#         print(data_args.dataset_config_name)
-#
-#
-# class LDKP3KMediumKEDataset(KEDataset):
-#     """Class for LDKP3K medium dataset from Huggingface Hub"""
-#
-#     def __init__(
-#             self,
-#             data_args: ke_data_args.LDKP3KMediumKEDataArguments = ke_data_args.LDKP3KMediumKEDataArguments()
-#     ):
-#         super().__init__(data_args=data_args)
-#
-#
-# class LDKP3KLargeKEDataset(KEDataset):
-#     """Class for LDKP3K large dataset from Huggingface Hub"""
-#
-#     def __init__(
-#             self,
-#             data_args: ke_data_args.LDKP3KLargeKEDataArguments = ke_data_args.LDKP3KLargeKEDataArguments()
-#     ):
-#         super().__init__(data_args=data_args)
-#
-#
-# class LDKP10KSmallKEDataset(KEDataset):
-#     """Class for LDKP10K small dataset from Huggingface Hub"""
-#
-#     def __init__(
-#             self,
-#             data_args: ke_data_args.LDKP10KSmallKEDataArguments = ke_data_args.LDKP10KSmallKEDataArguments()
-#     ):
-#         super().__init__(data_args=data_args)
-#
-#
-# class LDKP10KMediumKEDataset(KEDataset):
-#     """Class for LDKP10K medium dataset from Huggingface Hub"""
-#
-#     def __init__(
-#             self,
-#             data_args: ke_data_args.LDKP10KMediumKEDataArguments = ke_data_args.LDKP10KMediumKEDataArguments()
-#     ):
-#         super().__init__(data_args=data_args)
-#
-#
-# class LDKP10KLargeKEDataset(KEDataset):
-#     """Class for LDKP10K large dataset from Huggingface Hub"""
-#
-#     def __init__(
-#             self,
-#             data_args: ke_data_args.LDKP10KLargeKEDataArguments = ke_data_args.LDKP10KLargeKEDataArguments()
-#     ):
-#         super().__init__(data_args=data_args)
+
+class LDKPKEDataset(KEDataset):
+    """Class for LDKP3K small dataset from Huggingface Hub"""
+
+    def __init__(
+            self,
+            data_args: KEDataArguments,
+    ):
+        super().__init__(data_args=data_args)
+
+    def load(self) -> None:
+        """Loads the training, validation and test splits from either an existing dataset from Huggingface hub or
+        from provided files.
+
+        Returns:
+            None
+        """
+        logger.info(f"Only loading the following splits {self._splits}")
+        # Downloading and loading a dataset from the hub.
+        self._datasets = load_dataset(
+            self.data_args.dataset_name,
+            self.data_args.dataset_config_name,
+            split=self._splits,
+            cache_dir=self.data_args.cache_dir,
+        )
+
+        self._datasets = self._create_dataset_dict_from_splits(self._datasets)
+
+        # TODO: Fix https://github.com/huggingface/datasets/issues/4506
+        self._datasets = self._datasets.map(
+            self.__order_sections,
+            num_proc=self.data_args.preprocessing_num_workers,
+        )
+
+        if "train" in self._datasets:
+            column_names = self._datasets["train"].column_names
+        elif "validation" in self._datasets:
+            column_names = self._datasets["validation"].column_names
+        elif "test" in self._datasets:
+            column_names = self._datasets["test"].column_names
+        else:
+            raise AssertionError(
+                "neither train, validation or test dataset is available"
+            )
+
+        if self._text_column_name is None:
+            self._text_column_name = (
+                # TODO: convey this information properly in the documentation
+                "document" if "document" in column_names else column_names[1]
+            )  # either document or 2nd column as text i/p
+
+        assert self._text_column_name in column_names
+
+        if self._label_column_name is None:
+            self._label_column_name = (
+                "doc_bio_tags" if "doc_bio_tags" in column_names else None
+            )
+
+        if self._label_column_name is not None:
+            assert self._label_column_name in column_names
+
+        if "train" in self._datasets:
+            self._train = self._datasets["train"]
+        if "validation" in self._datasets:
+            self._validation = self._datasets["validation"]
+        if "test" in self._datasets:
+            self._test = self._datasets["test"]
+
+    def __order_sections(self, sample):
+        """
+        corrects the order in which different sections appear in the document.
+        resulting order is: title, abstract, other sections in the body
+        """
+        sections = []
+        sec_text = []
+        sec_bio_tags = []
+
+        if "title" in sample["sections"]:
+            title_idx = sample["sections"].index("title")
+            sections.append(sample["sections"].pop(title_idx))
+            sec_text.append(sample["sec_text"].pop(title_idx))
+            sec_bio_tags.append(sample["sec_bio_tags"].pop(title_idx))
+
+        if "abstract" in sample["sections"]:
+            abstract_idx = sample["sections"].index("abstract")
+            sections.append(sample["sections"].pop(abstract_idx))
+            sec_text.append(sample["sec_text"].pop(abstract_idx))
+            sec_bio_tags.append(sample["sec_bio_tags"].pop(abstract_idx))
+
+        sections += sample["sections"]
+        sec_text += sample["sec_text"]
+        sec_bio_tags += sample["sec_bio_tags"]
+        document = [element for sec_text_list in sec_text for element in sec_text_list]
+        doc_bio_tags = [element for sec_bio_tags_list in sec_bio_tags for element in sec_bio_tags_list]
+        assert len(document) == len(doc_bio_tags)
+
+        sample["sections"] = sections
+        sample["sec_text"] = sec_text
+        sample["sec_bio_tags"] = sec_bio_tags
+        sample["document"] = document
+        sample["doc_bio_tags"] = doc_bio_tags
+
+        return sample
+
+
+class LDKP3KSmallKEDataset(LDKPKEDataset):
+    """Class for LDKP3K medium dataset from Huggingface Hub"""
+
+    def __init__(
+            self,
+            data_args: ke_data_args.LDKP3KSmallKEDataArguments = ke_data_args.LDKP3KSmallKEDataArguments()
+    ):
+        super().__init__(data_args=data_args)
+
+
+class LDKP3KMediumKEDataset(LDKPKEDataset):
+    """Class for LDKP3K medium dataset from Huggingface Hub"""
+
+    def __init__(
+            self,
+            data_args: ke_data_args.LDKP3KMediumKEDataArguments = ke_data_args.LDKP3KMediumKEDataArguments()
+    ):
+        super().__init__(data_args=data_args)
+
+
+class LDKP3KLargeKEDataset(LDKPKEDataset):
+    """Class for LDKP3K large dataset from Huggingface Hub"""
+
+    def __init__(
+            self,
+            data_args: ke_data_args.LDKP3KLargeKEDataArguments = ke_data_args.LDKP3KLargeKEDataArguments()
+    ):
+        super().__init__(data_args=data_args)
+
+
+class LDKP10KSmallKEDataset(LDKPKEDataset):
+    """Class for LDKP10K small dataset from Huggingface Hub"""
+
+    def __init__(
+            self,
+            data_args: ke_data_args.LDKP10KSmallKEDataArguments = ke_data_args.LDKP10KSmallKEDataArguments()
+    ):
+        super().__init__(data_args=data_args)
+
+
+class LDKP10KMediumKEDataset(LDKPKEDataset):
+    """Class for LDKP10K medium dataset from Huggingface Hub"""
+
+    def __init__(
+            self,
+            data_args: ke_data_args.LDKP10KMediumKEDataArguments = ke_data_args.LDKP10KMediumKEDataArguments()
+    ):
+        super().__init__(data_args=data_args)
+
+
+class LDKP10KLargeKEDataset(LDKPKEDataset):
+    """Class for LDKP10K large dataset from Huggingface Hub"""
+
+    def __init__(
+            self,
+            data_args: ke_data_args.LDKP10KLargeKEDataArguments = ke_data_args.LDKP10KLargeKEDataArguments()
+    ):
+        super().__init__(data_args=data_args)
 
 
 class KPTimesKEDataset(KEDataset):
@@ -509,4 +622,3 @@ class CiteulikeKEDataset(KEDataset):
             data_args (CiteulikeKEDataArguments): Arguments to be considered while loading Citeulike dataset for keyphrase extraction.
         """
         super().__init__(data_args=data_args)
-

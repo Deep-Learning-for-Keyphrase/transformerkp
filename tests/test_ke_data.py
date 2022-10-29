@@ -13,6 +13,7 @@ from transformerkp.data.extraction.ke_datasets import SemEval2010KEDataset
 from transformerkp.data.extraction.ke_datasets import DUC2001KEDataset
 from transformerkp.data.extraction.ke_datasets import CSTRKEDataset
 from transformerkp.data.extraction.ke_datasets import PubMedKEDataset
+from transformerkp.data.extraction.ke_datasets import LDKP3KSmallKEDataset
 from transformerkp.data.registry import KEDataLoaderRegistry
 from transformerkp.data.dataset_loaders import Inspec
 from transformerkp.data.dataset_loaders import NUS
@@ -378,6 +379,14 @@ def test_semeval2010_ke_data_load(ke_data_registry):
     assert dataset.train is not None
     assert dataset.validation is None
     assert dataset.test.num_rows == 100
+
+
+def test_ldkp_ke_data_load():
+    ldkp3k_ke_data = LDKP3KSmallKEDataset()
+    ldkp3k_ke_data.load()
+    assert ldkp3k_ke_data.train.num_rows == 20000
+    assert ldkp3k_ke_data.validation.num_rows == 3339
+    assert ldkp3k_ke_data.test.num_rows == 3413
 
 
 def test_custom_ke_dataset_load(json_files, csv_files):
