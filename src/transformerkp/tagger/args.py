@@ -10,7 +10,7 @@ class KETrainingArguments(TrainingArguments):
     A custom training argument class for keyphrase extraction, extending HF's TrainingArguments class.
     """
 
-    score_aggregation_method: bool = field(
+    score_aggregation_method: Optional[str] = field(
         default="avg",
         metadata={
             "help": "which method among avg, max and first to use while calculating confidence score of a keyphrase. "
