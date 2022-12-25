@@ -66,25 +66,25 @@ class BertCrfModelForKpExtraction(BertPreTrainedModel):
 
         sequence_output = self.dropout(sequence_output)
         logits = self.classifier(sequence_output)
-        loss = None
-        if labels is not None:
-            loss = -1.0 * self.crf(logits, labels.clone(), attention_mask)
-        best_path = self.crf.viterbi_tags(logits, mask=attention_mask)
+        best_path = self.crf.viterbi_tags(logits=logits, mask=attention_mask)
         # ignore score of path, just store the tags value
         best_path = [x for x, _ in best_path]
-        logits *= 0.0
+        class_prob = logits * 0.0
         for i, path in enumerate(best_path):
             for j, tag in enumerate(path):
-                # j+ 1 to ignore clf token at begning
-                logits[i, j + 1 - attention_mask[0], int(tag)] = 1.0
+                class_prob[i, j, int(tag)] = 1.0
+
+        loss = None
+        if labels is not None:
+            loss = -1.0 * self.crf(logits, labels, attention_mask)
 
         if not return_dict:
-            output = (logits,) + outputs[2:]
+            output = (class_prob,) + outputs[2:]
             return ((loss,) + output) if loss is not None else output
 
         return TokenClassifierOutput(
             loss=loss,
-            logits=logits,
+            logits=class_prob,
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
         )
@@ -147,25 +147,25 @@ class RobertaCrfForKpExtraction(RobertaPreTrainedModel):
         sequence_output = self.dropout(sequence_output)
         logits = self.classifier(sequence_output)
 
-        loss = None
-        if labels is not None:
-            loss = -1.0 * self.crf(logits, labels.clone(), attention_mask)
-        best_path = self.crf.viterbi_tags(logits, mask=attention_mask)
+        best_path = self.crf.viterbi_tags(logits=logits, mask=attention_mask)
         # ignore score of path, just store the tags value
         best_path = [x for x, _ in best_path]
-        logits *= 0.0
+        class_prob = logits * 0.0
         for i, path in enumerate(best_path):
             for j, tag in enumerate(path):
-                # j+ 1 to ignore clf token at begning
-                logits[i, j + 1 - attention_mask[0], int(tag)] = 1.0
+                class_prob[i, j, int(tag)] = 1.0
+
+        loss = None
+        if labels is not None:
+            loss = -1.0 * self.crf(logits, labels, attention_mask)
 
         if not return_dict:
-            output = (logits,) + outputs[2:]
+            output = (class_prob,) + outputs[2:]
             return ((loss,) + output) if loss is not None else output
 
         return TokenClassifierOutput(
             loss=loss,
-            logits=logits,
+            logits=class_prob,
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
         )
