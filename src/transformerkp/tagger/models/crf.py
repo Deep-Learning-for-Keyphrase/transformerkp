@@ -181,16 +181,19 @@ class ConditionalRandomField(torch.nn.Module):
         if mask is None:
             mask = torch.ones(*tags.size(), dtype=torch.bool)
         else:
-            # The code below fails in weird ways if this isn't a bool tensor, so we make sure.
+            # tokens tagged with -100 will have zero attention
             mask[tags == -100] = 0
+            # The code below fails in weird ways if this isn't a bool tensor, so we make sure.
             mask = mask.to(torch.bool)
         is_masked = tags == -100
-        tags[is_masked] = self.label2id[self.id2label[0]]
+        # to make sure label of tagged token is always "O".
+        tags[is_masked] = self.label2id["O"]
 
         log_denominator = self._input_likelihood(inputs, mask)
 
         log_numerator = self._joint_likelihood(inputs, tags, mask)
-        # tags[is_masked] = -100
+        # revert the tags for fair evaluation of entity
+        tags[is_masked] = -100
         return torch.sum(log_numerator - log_denominator)
 
     def viterbi_tags(

@@ -40,12 +40,20 @@ class KeyphraseTagger:
         self.use_crf = (
             self.config.use_crf if hasattr(self.config, "use_crf") else use_crf
         )
+        self.config.use_crf = self.use_crf
+        self.config.label2id = LABELS_TO_ID
+        self.config.id2label = ID_TO_LABELS
 
         self.tokenizer = AutoTokenizer.from_pretrained(
             tokenizer_name if tokenizer_name else model_name_or_path,
             use_fast=True,
             add_prefix_space=True,
         )
+        # set pad token if none
+        pad_token_none = self.tokenizer.pad_token == None
+        if pad_token_none:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+
         self.trainer = trainer
         self.data_collator = data_collator
         self.model_type = (
@@ -132,17 +140,7 @@ class KeyphraseTagger:
         # Set seed before initializing model.
         set_seed(training_args.seed)
 
-        # set pad token if none
-        pad_token_none = self.tokenizer.pad_token == None
-        if pad_token_none:
-            self.tokenizer.pad_token = self.tokenizer.eos_token
-
-        self.config.use_crf = self.use_crf
-        self.config.label2id = LABELS_TO_ID
-        self.config.id2label = ID_TO_LABELS
-        if pad_token_none:
-            self.config.pad_token_id = self.config.eos_token_id
-        # initialize data collator
+        # set data collator
         data_collator = (
             self.data_collator
             if self.data_collator
